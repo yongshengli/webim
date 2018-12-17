@@ -1,0 +1,16 @@
+# phpstorm project files
+.idea
+
+# Mac DS_Store Files
+.DS_Store
+
+# netbeans project files
+nbproject
+
+# zend studio for eclipse project files
+.buildpath
+.project
+.settings
+
+# windows thumbnail cache
+Thumbs.db
