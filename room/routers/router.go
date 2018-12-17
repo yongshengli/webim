@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"samples/WebIM/controllers"
+	"webim/room/controllers"
 	"github.com/astaxie/beego"
 )
 
