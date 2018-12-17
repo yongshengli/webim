@@ -15,6 +15,10 @@ var (
 type Manager struct {}
 
 func (r *Manager) Register(ip string, res *int) error {
+	if _, ok := ServiceMap[ip]; ok{
+		*res = 0
+		return nil
+	}
 	e := ServiceList.PushBack(ip)
 	ServiceMap[ip] = e
 	*res = 0
@@ -41,7 +45,7 @@ func (r *Manager) List(req string, res *[]string) error{
 func main(){
 	m := new(Manager)
 	err := rpc.Register(m)
-	if err!=nil{
+	if err!=nil {
 		panic(err)
 	}
 	//ResolveTCPAddr返回TCP端点的地址。

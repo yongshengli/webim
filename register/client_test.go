@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/rpc"
 	"testing"
 )
@@ -17,7 +16,9 @@ func TestClient(t *testing.T){
 	if err2!=nil {
 		t.Fatal(err)
 	}
-	fmt.Println(res)
+	if res!=0{
+		t.Errorf("excpet 0 but got %d", res)
+	}
 }
 func TestList(t *testing.T){
 	client,err:=rpc.Dial("tcp","127.0.0.1:1234")
