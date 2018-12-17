@@ -13,12 +13,12 @@
 // under the License.
 
 // This sample is about using long polling and WebSocket to build a web-based chat room based on beego.
-package main
+package room
 
 import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
-	_ "samples/WebIM/routers"
+	_ "webim/room/routers"
 )
 
 const (
