@@ -16,12 +16,15 @@ package models
 
 import (
 	"container/list"
+	"time"
 )
 
 type EventType int
 
 const (
-	EVENT_JOIN = iota
+	EVENT_CONN = iota
+	EVENT_DISCONN
+	EVENT_JOIN
 	EVENT_LEAVE
 	EVENT_MESSAGE
 )
@@ -35,6 +38,9 @@ type Event struct {
 
 const archiveSize = 20
 
+func NewEvent(ep models.EventType, event ) models.Event {
+	return models.Event{ep, int(time.Now().Unix()), msg}
+}
 // Event archives.
 var archive = list.New()
 
