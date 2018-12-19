@@ -27,20 +27,22 @@ const (
 	EVENT_JOIN
 	EVENT_LEAVE
 	EVENT_MESSAGE
+	EVENT_LOGIN
+	EVENT_LOGOUT
 )
 
 type Event struct {
-	Type      EventType // JOIN, LEAVE, MESSAGE
-	User      string
-	Timestamp int // Unix timestamp (secs)
-	Content   string
+	Type      EventType                   `json:"type"` // JOIN, LEAVE, MESSAGE
+	Data      map[interface{}]interface{} `json:"data"`
+	Timestamp int                         `time:"time"` // Unix timestamp (secs)
 }
 
 const archiveSize = 20
 
-func NewEvent(ep models.EventType, event ) models.Event {
-	return models.Event{ep, int(time.Now().Unix()), msg}
+func NewEvent(ep EventType, data map[interface{}]interface{}) Event {
+	return Event{Type: ep, Data: data, Timestamp: int(time.Now().Unix())}
 }
+
 // Event archives.
 var archive = list.New()
 

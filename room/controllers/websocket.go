@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/astaxie/beego"
@@ -40,7 +41,7 @@ func (this *WebSocketController) Join() {
 		return
 	}
 
-	conn(ws)
+	saveConn(ws)
 	defer disConn(ws)
 
 	// Message receive loop.
@@ -49,6 +50,8 @@ func (this *WebSocketController) Join() {
 		if err != nil {
 			return
 		}
-		publish <- models.NewEvent(models.EVENT_MESSAGE, string(p))
+		msg := new(models.Msg)
+		json.Unmarshal(p, msg)
+		reqChan <- msg
 	}
 }
