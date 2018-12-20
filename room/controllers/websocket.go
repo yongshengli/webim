@@ -52,6 +52,6 @@ func (this *WebSocketController) Join() {
 		}
 		msg := new(models.Msg)
 		json.Unmarshal(p, msg)
-		reqChan <- msg
+		reqChan <- *msg
 	}
 }
