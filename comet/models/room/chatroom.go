@@ -1,6 +1,7 @@
 package room
 
 import (
+	"github.com/astaxie/beego"
 	"webim/comet/models"
 )
 
@@ -10,9 +11,8 @@ type Room struct {
 	users map[*Session]int
 }
 
-type JoinRoomData struct {
-	RoomId int
-	User User
+func NewRoom(id int, m *Manager) *Room{
+	return &Room{Id:id, Manager:m, users:make(map[*Session]int)}
 }
 
 func (r *Room) Join(s *Session) bool{
@@ -37,7 +37,7 @@ func (r *Room) Leave(s *Session) bool{
 //房间内广播
 func (r *Room) Broadcast(msg *models.Msg) bool{
 	msg.Data["room_id"] = r.Id
-
+	beego.Debug("room broadcast")
 	for session, _ := range r.users{
 		session.Send(msg)
 	}

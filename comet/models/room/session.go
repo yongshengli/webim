@@ -24,7 +24,7 @@ type Session struct {
 	reqChan chan *models.Msg
 	repChan chan *models.Msg
 }
-func New(conn *websocket.Conn, m *Manager) *Session{
+func NewSession(conn *websocket.Conn, m *Manager) *Session{
 	u := &User{
 		Id:0,
 		Name:"匿名用户",
@@ -39,6 +39,8 @@ func New(conn *websocket.Conn, m *Manager) *Session{
 
 func (s *Session) Run(){
 	defer s.Close()
+
+	s.Manager.AddSession(s)
 	go s.start()
 	s.read()
 }
@@ -53,10 +55,11 @@ func (s *Session) start(){
 	}
 }
 func (s *Session) Send(msg *models.Msg){
+	beego.Debug("session send call")
 	s.repChan <- msg
 }
 
-func (s * Session) write(msg models.Msg) bool{
+func (s * Session) write(msg *models.Msg) bool{
 	data, err := json.Marshal(msg)
 	if err != nil {
 		beego.Error("Fail to marshal event:", err)
@@ -72,11 +75,19 @@ func (s * Session) write(msg models.Msg) bool{
 func (s *Session) do(msg *models.Msg){
 	switch msg.MsgType{
 		case models.TYPE_ROOM_MSG:
-		s.repChan <- msg
-
+			if _, ok:=msg.Data["room_id"]; !ok{
+				beego.Warn("room_id 为空")
+				return
+			}
+			roomId := int(msg.Data["room_id"].(float64))
+			room := s.Manager.GetRoom(roomId)
+			if room !=nil{
+				room.Join(s)
+			}
+			room.Broadcast(msg)
 	case models.TYPE_JOIN_ROOM:
 		if _, ok:=msg.Data["room_id"]; !ok{
-			fmt.Println("room_id 为空")
+			beego.Warn("room_id 为空")
 			return
 		}
 		roomId := int(msg.Data["room_id"].(float64))

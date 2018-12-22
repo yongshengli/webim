@@ -2,7 +2,7 @@ package room
 
 import (
 	"container/list"
-	"fmt"
+	"github.com/astaxie/beego"
 	"webim/comet/models"
 )
 var SessionManager *Manager
@@ -14,12 +14,12 @@ type Manager struct {
 }
 
 func init() {
-	fmt.Println("manager init")
 	SessionManager = &Manager{
 		rooms:       make(map[int]*Room),
 		users:       make(map[int]*Session),
 		sessionList: list.New(),
 	}
+	beego.Debug("manager init")
 }
 func (m *Manager) GetSessionByUid(uid int) *Session{
 
@@ -56,6 +56,7 @@ func (m *Manager) GetRoom(roomId int) *Room{
 	if _, ok := m.rooms[roomId]; ok {
 		return m.rooms[roomId]
 	}
+	m.rooms[roomId] = NewRoom(roomId, m)
 	return nil
 }
 func (m *Manager) AddRoom(r *Room) bool{
@@ -70,10 +71,9 @@ func (m *Manager) DelRoom(r *Room) bool{
 	return true
 }
 
-func (m *Manager) Broadcast(msg models.Msg) bool{
+func (m *Manager) Broadcast(msg *models.Msg) bool{
 	for s := m.sessionList.Front(); s != nil; s = s.Next() {
-		// Immediately send event to WebSocket users.
-		s.Value.(Session).Send(msg)
+		s.Value.(*Session).Send(msg)
 	}
 	return true
 }

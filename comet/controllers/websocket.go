@@ -40,5 +40,5 @@ func (c *WebSocketController) Join() {
 		beego.Error("Cannot setup WebSocket connection:", err)
 		return
 	}
-	room.New(conn, room.SessionManager).Run()
+	room.NewSession(conn, room.SessionManager).Run()
 }
