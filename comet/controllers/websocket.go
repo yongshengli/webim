@@ -7,29 +7,12 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 )
-
 // WebSocketController handles WebSocket requests.
 type WebSocketController struct {
-	BaseController
+	beego.Controller
 }
-
-// Get method handles GET requests for WebSocketController.
-func (c *WebSocketController) Get() {
-	// Safe check.
-	uname := c.GetString("uname")
-	if len(uname) == 0 {
-		c.Redirect("/", 302)
-		return
-	}
-
-	c.TplName = "websocket.html"
-	c.Data["IsWebSocket"] = true
-	c.Data["UserName"] = uname
-	c.Render()
-}
-
 // Join method handles WebSocket requests for WebSocketController.
-func (c *WebSocketController) Join() {
+func (c *WebSocketController) Get() {
 	ws := websocket.Upgrader{}
 	// Upgrade from http request to WebSocket.
 	conn, err := ws.Upgrade(c.Ctx.ResponseWriter, c.Ctx.Request, nil)

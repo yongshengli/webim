@@ -56,11 +56,11 @@ func (m *Manager) GetRoom(roomId int) *Room{
 	if _, ok := m.rooms[roomId]; ok {
 		return m.rooms[roomId]
 	}
-	m.rooms[roomId] = NewRoom(roomId, m)
 	return nil
 }
-func (m *Manager) AddRoom(r *Room) bool{
-	m.rooms[r.Id] = r
+
+func (m *Manager) AddRoom(roomId int) bool{
+	m.rooms[roomId] = NewRoom(roomId, m)
 	return true
 }
 

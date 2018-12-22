@@ -7,11 +7,10 @@ import (
 
 func init() {
 	// Register routers.
-	beego.Router("/", &controllers.AppController{})
+	beego.Router("/", &controllers.WebIMController{}, "get:Welcome")
 	// Indicate AppController.Join method to handle POST requests.
-	beego.Router("/join", &controllers.AppController{}, "post:Join")
+	beego.Router("/room/create", &controllers.WebIMController{}, "post:Join")
 
 	// WebSocket.
 	beego.Router("/ws", &controllers.WebSocketController{})
-	beego.Router("/ws/join", &controllers.WebSocketController{}, "get:Join")
 }
