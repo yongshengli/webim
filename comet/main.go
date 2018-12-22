@@ -18,15 +18,23 @@ package main
 import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
-	_ "webim/comet/routers"
-)
-
-const (
-	APP_VER = "0.1.1.0227"
+	"webim/comet/controllers"
 )
 
 func main() {
-	beego.Info(beego.BConfig.AppName, APP_VER)
+	beego.Info(beego.BConfig.AppName, "start...")
+
+	// Register routers.
+	beego.Router("/", &controllers.WebIMController{}, "get:Welcome")
+	beego.Router("/webim", &controllers.WebIMController{})
+
+	beego.Router("/room/create", &controllers.RoomController{}, "post:Create")
+	beego.Router("/room/delete", &controllers.RoomController{}, "post:Delete")
+
+	// WebSocket.
+	beego.Router("/ws", &controllers.WebSocketController{})
+
+
 
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)

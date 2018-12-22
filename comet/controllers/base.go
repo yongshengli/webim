@@ -3,8 +3,21 @@ package controllers
 import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
-	"webim/comet/models/room"
+	"strings"
 )
+
+func init() {
+	// Initialize language type list.
+	langTypes = strings.Split(beego.AppConfig.String("lang_types"), "|")
+	// Load locale files according to language types.
+	for _, lang := range langTypes {
+		beego.Trace("Loading language: " + lang)
+		if err := i18n.SetMessage(lang, "conf/"+"locale_"+lang+".ini"); err != nil {
+			beego.Error("Fail to set message file:", err)
+			return
+		}
+	}
+}
 // baseController represents base router for all other app routers.
 // It implemented some methods for the same implementation;
 // thus, it will be embedded into other routers.
@@ -58,16 +71,4 @@ func (c *BaseController) error(msg string) {
 		Data: nil,
 	}
 	c.ServeJSON()
-}
-
-type RoomController struct {
-	BaseController
-}
-
-func (c *RoomController) Create() {
-	roomId, err := c.GetInt("id")
-	if err !=nil{
-		c.error(err.Error())
-	}
-	room.SessionManager.AddRoom(roomId)
 }

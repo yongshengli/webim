@@ -64,14 +64,29 @@ func (m *Manager) AddRoom(roomId int) bool{
 	return true
 }
 
-func (m *Manager) DelRoom(r *Room) bool{
-	if _, ok := m.rooms[r.Id]; ok{
-		delete(m.rooms, r.Id)
+type Monitor struct {
+	UserNum    int `json:"user_num"`
+	SessionNum int `json:"conn_num"`
+	RoomNum    int `json:"room_num"`
+}
+
+func Count() Monitor {
+	monitor := Monitor{
+		UserNum:    len(SessionManager.users),
+		SessionNum: SessionManager.sessionList.Len(),
+		RoomNum:    len(SessionManager.rooms),
+	}
+	return monitor
+}
+
+func (m *Manager) DelRoom(roomId int) bool {
+	if _, ok := m.rooms[roomId]; ok {
+		delete(m.rooms, roomId)
 	}
 	return true
 }
 
-func (m *Manager) Broadcast(msg *models.Msg) bool{
+func (m *Manager) Broadcast(msg *models.Msg) bool {
 	for s := m.sessionList.Front(); s != nil; s = s.Next() {
 		s.Value.(*Session).Send(msg)
 	}
