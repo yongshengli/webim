@@ -1,0 +1,63 @@
+var socket;
+
+$(document).ready(function () {
+    // Create a socket
+    socket = new WebSocket('ws://' + window.location.host + '/ws/join?uname=' + $('#uname').text());
+    socket.onopen = function() {
+        console.log("建立长连接");
+        var data = {"type":2,"data":{"room_id":1}}
+        socket.send(JSON.stringify(data))
+    };
+    // Message received on the socket
+    socket.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        var li = document.createElement('li');
+
+        console.log(data);
+
+        switch (data['type']) {
+        case 2: // JOIN
+            if (data.User == $('#uname').text()) {
+                li.innerText = 'You joined the chat room.';
+            } else {
+                li.innerText = data.User + ' joined the chat room.';
+            }
+            break;
+        case 3: // LEAVE
+            li.innerText = data.User + ' left the chat room.';
+            break;
+        case 1: // MESSAGE
+            var username = document.createElement('strong');
+            var content = document.createElement('span');
+
+            username.innerText = data.data['user'] || "匿名用户";
+            content.innerText = data.data['content'];
+
+            li.appendChild(username);
+            li.appendChild(document.createTextNode(': '));
+            li.appendChild(content);
+
+            break;
+        }
+
+        $('#chatbox li').first().before(li);
+    };
+
+    // Send messages.
+    var postConecnt = function () {
+        var data = {
+            "type": 1,
+            "data": {
+                "room_id": 1,
+                "uname": $('#uname').text(),
+                content: $('#sendbox').val()
+            }
+        }
+        socket.send(JSON.stringify(data));
+        $('#sendbox').val('');
+    }
+
+    $('#sendbtn').click(function () {
+        postConecnt();
+    });
+});
