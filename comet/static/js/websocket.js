@@ -2,10 +2,10 @@ var socket;
 
 $(document).ready(function () {
     // Create a socket
-    socket = new WebSocket('ws://' + window.location.host + '/ws/join?uname=' + $('#uname').text());
+    socket = new WebSocket('ws://' + window.location.host + '/ws?uname=' + $('#uname').text());
     socket.onopen = function() {
         console.log("建立长连接");
-        var data = {"type":2,"data":{"room_id":1}}
+        var data = {"type":4,"data":{"room_id":1}}
         socket.send(JSON.stringify(data))
     };
     // Message received on the socket
@@ -45,6 +45,11 @@ $(document).ready(function () {
 
     // Send messages.
     var postConecnt = function () {
+        var content = $('#sendbox').val()
+        if (!content){
+            alert("发送的内容不能为空")
+            return
+        }
         var data = {
             "type": 1,
             "data": {

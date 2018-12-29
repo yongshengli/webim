@@ -73,36 +73,59 @@ func (s * Session) write(msg *models.Msg) bool{
 }
 
 func (s *Session) do(msg *models.Msg){
-	switch msg.MsgType{
-		case models.TYPE_ROOM_MSG:
-			if _, ok:=msg.Data["room_id"]; !ok{
-				beego.Warn("room_id 为空")
-				return
-			}
-			roomId := int(msg.Data["room_id"].(float64))
-			room := s.Manager.GetRoom(roomId)
-			if room !=nil{
-				room.Join(s)
-			}
-			room.Broadcast(msg)
-	case models.TYPE_JOIN_ROOM:
-		if _, ok:=msg.Data["room_id"]; !ok{
+	switch msg.MsgType {
+	case models.TYPE_CREATE_ROOM:
+		if _, ok := msg.Data["room_id"]; !ok {
 			beego.Warn("room_id 为空")
 			return
 		}
 		roomId := int(msg.Data["room_id"].(float64))
 		room := s.Manager.GetRoom(roomId)
-		if room !=nil{
+		if room == nil {
+			s.Manager.AddRoom(roomId)
+			data := make(map[string]interface{})
+			data["content"] = "创建房间成功"
+			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
+		}
+		m := *msg
+		m.MsgType = models.TYPE_JOIN_ROOM
+		s.do(&m)
+	case models.TYPE_ROOM_MSG:
+		if _, ok := msg.Data["room_id"]; !ok {
+			beego.Warn("room_id 为空")
+			return
+		}
+		roomId := int(msg.Data["room_id"].(float64))
+		room := s.Manager.GetRoom(roomId)
+		if room == nil {
+			data := make(map[string]interface{})
+			data["content"] = "房间不存在"
+			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
+		} else {
+			room.Broadcast(msg)
+		}
+	case models.TYPE_JOIN_ROOM:
+		if _, ok := msg.Data["room_id"]; !ok {
+			beego.Warn("room_id 为空")
+			return
+		}
+		roomId := int(msg.Data["room_id"].(float64))
+		room := s.Manager.GetRoom(roomId)
+		if room == nil {
+			data := make(map[string]interface{})
+			data["content"] = "房间不存在"
+			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
+		} else {
 			room.Join(s)
 		}
 	case models.TYPE_LEAVE_ROOM:
-		if _, ok:=msg.Data["room_id"]; !ok{
+		if _, ok := msg.Data["room_id"]; !ok {
 			fmt.Println("room_id 为空")
 			return
 		}
 		roomId := int(msg.Data["room_id"].(float64))
 		room := s.Manager.GetRoom(roomId)
-		if room!=nil{
+		if room != nil {
 			room.Leave(s)
 		}
 	}

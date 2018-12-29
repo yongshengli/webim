@@ -20,7 +20,7 @@ func (r *Room) Join(s *Session) bool{
 	data := make(map[string]interface{})
 	data["room_id"] = r.Id
 	data["content"] = s.User.Name + "进入房间"
-	msg := models.New(models.TYPE_ROOM_MSG, data)
+	msg := models.NewMsg(models.TYPE_ROOM_MSG, data)
 	r.Broadcast(msg)
 	return true
 }

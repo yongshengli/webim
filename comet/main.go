@@ -19,6 +19,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 	"webim/comet/controllers"
+	_ "webim/comet/models/room"
 )
 
 func main() {
