@@ -26,10 +26,14 @@ func (r *Room) Join(s *Session) bool{
 }
 
 func (r *Room) Leave(s *Session) bool{
-	if _, ok := r.users[s]; !ok{
+	if _, ok := r.users[s]; !ok {
 		return true
 	}
 	delete(r.users, s)
+	if len(r.users)<1 {
+		r.Manager.DelRoom(r.Id)
+		beego.Debug("房间%d内用户为空删除房间", r.Id)
+	}
 	return true
 }
 // This function handles all incoming chan messages.
