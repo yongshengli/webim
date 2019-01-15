@@ -3,22 +3,31 @@ package main
 import (
 	"net/rpc"
 	"testing"
+	"encoding/json"
+	"net"
+	"fmt"
 )
 
 func TestClient(t *testing.T){
-	client,err:=rpc.Dial("tcp","127.0.0.1:1234")
-	if err!=nil {
-		t.Fatal("连接Dial的发生了错误，我要退出了",err)
+	client, err := net.Dial("tcp", "127.0.0.1:1234")
+	if err != nil {
+		t.Fatal("连接Dial的发生了错误，我要退出了", err)
 	}
-	var res int
-	err2 := client.Call("Manager.Register", "127.0.0.1:8000", &res)
+	defer client.Close()
+	buffer := make([]byte, 512)
+	n, err := client.Write([]byte("list"))
+	if err != nil {
+		panic(err)
+	}
+	n, err2 := client.Read(buffer)
 
-	if err2!=nil {
-		t.Fatal(err)
+	var slice []string
+	json.Unmarshal(buffer, slice)
+	if err2 != nil {
+		fmt.Println("Read failed:", err2)
+		return
 	}
-	if res!=0{
-		t.Errorf("excpet 0 but got %d", res)
-	}
+	fmt.Println("count:", n, "msg:", string(buffer))
 }
 func TestList(t *testing.T){
 	client,err:=rpc.Dial("tcp","127.0.0.1:1234")

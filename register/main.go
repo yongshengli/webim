@@ -1,66 +1,80 @@
 package main
 
 import (
-	"container/list"
 	"fmt"
 	"net"
-	"net/rpc"
+	"encoding/json"
+	"log"
 )
+type Manager struct {
+	ServiceMap map[*net.Conn]string
+}
 
-var (
-	ServiceMap = make(map[string]*list.Element)
-	ServiceList = list.New()
-)
+var Server = &Manager{
+	ServiceMap: make(map[*net.Conn]string),
+}
 
-type Manager struct {}
-
-func (r *Manager) Register(ip string, res *int) error {
-	if _, ok := ServiceMap[ip]; ok{
-		*res = 0
+func (m *Manager) Register(conn *net.Conn) error {
+	if _, ok := m.ServiceMap[conn]; ok{
 		return nil
 	}
-	e := ServiceList.PushBack(ip)
-	ServiceMap[ip] = e
-	*res = 0
-	fmt.Println(ServiceList)
+	m.ServiceMap[conn] = (*conn).RemoteAddr().String()
+	log.Println(m.ServiceMap)
 	return nil
 }
 
-func (r *Manager) Unregister(ip string, res *int) error {
-	if e, ok := ServiceMap[ip]; ok{
-		ServiceList.Remove(e)
-	}
-	*res = 0
-	return nil
-}
-func (r *Manager) List(req string, res *[]string) error{
-
-	for item := ServiceList.Front(); item != nil; item = item.Next(){
-		*res = append(*res, item.Value.(string))
-		fmt.Println(item.Value.(string))
+func (m *Manager) Unregister(conn *net.Conn) error {
+	log.Println("用户")
+	if _, ok := m.ServiceMap[conn]; ok{
+		delete(m.ServiceMap, conn)
 	}
 	return nil
 }
+func (m *Manager) List() []string{
+	var slice []string
+	for _, v := range m.ServiceMap{
+		slice = append(slice, v)
+		fmt.Println(v)
+	}
+	return slice
+}
 
+func handleConnection(conn *net.Conn){
+	defer func(conn *net.Conn){
+		defer (*conn).Close()
+		Server.Unregister(conn)
+	}(conn)
+	Server.Register(conn)
+
+	for {
+		var buf [512]byte
+		n, err := (*conn).Read(buf[0:])
+		if err != nil {
+			return
+		}
+		if string(buf[:n]) == "list" {
+			b, _ := json.Marshal(Server.List())
+			_, err2 := (*conn).Write(b)
+			if err2 != nil {
+				return
+			}
+		}
+	}
+}
 func main(){
-	m := new(Manager)
-	err := rpc.Register(m)
-	if err!=nil {
-		panic(err)
-	}
 	//ResolveTCPAddr返回TCP端点的地址。
 	//网络必须是TCP网络名称。
-	tcpAddr, err := net.ResolveTCPAddr("tcp",":1234")
-	if err!=nil {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", ":1234")
+	if err != nil {
 		panic(err)
 	}
-	listener,err := net.ListenTCP("tcp",tcpAddr)
-	for  {
+	listener, err := net.ListenTCP("tcp", tcpAddr)
+	for {
 		//需要自己控制连接，当有客户端连接上来后，我们需要把这个连接交给rpc 来处理
-		conn,err:=listener.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			continue
 		}
-		rpc.ServeConn(conn)
+		go handleConnection(&conn)
 	}
 }
