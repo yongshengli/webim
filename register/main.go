@@ -49,15 +49,17 @@ func handleConnection(conn *net.Conn){
 	for {
 		var buf [512]byte
 		n, err := (*conn).Read(buf[0:])
+		if n>0 {
+			if string(buf[:n]) == "list" {
+				b, _ := json.Marshal(Server.List())
+				_, err2 := (*conn).Write(b)
+				if err2 != nil {
+					return
+				}
+			}
+		}
 		if err != nil {
 			return
-		}
-		if string(buf[:n]) == "list" {
-			b, _ := json.Marshal(Server.List())
-			_, err2 := (*conn).Write(b)
-			if err2 != nil {
-				return
-			}
 		}
 	}
 }
