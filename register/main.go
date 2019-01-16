@@ -5,6 +5,7 @@ import (
 	"net"
 	"encoding/json"
 	"log"
+	"webim/comet/models"
 )
 type Manager struct {
 	ServiceMap map[*net.Conn]string
@@ -38,7 +39,19 @@ func (m *Manager) List() []string{
 	}
 	return slice
 }
-
+func (m *Manager) broadcast(msg models.Msg) error{
+	b, err := json.Marshal(msg)
+	if err!=nil{
+		return err
+	}
+	for conn := range m.ServiceMap{
+		_, err2 := (*conn).Write(b)
+		if err2!=nil{
+			continue
+		}
+	}
+	return nil
+}
 func handleConnection(conn *net.Conn){
 	defer func(conn *net.Conn){
 		defer (*conn).Close()
