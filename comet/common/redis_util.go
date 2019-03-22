@@ -2,7 +2,6 @@ package common
 
 import (
     "errors"
-    "github.com/astaxie/beego"
     "github.com/astaxie/beego/logs"
     "github.com/gomodule/redigo/redis"
     "sync"
@@ -38,21 +37,21 @@ func (r *redisClient) GetString(key string) string {
     rep, _ := redis.String(r.Get(key))
     return rep
 }
-func (r *redisClient) Set(key string, val interface{}, timeout time.Duration) string {
+func (r *redisClient) Set(key string, val interface{}, timeout time.Duration) (string, error) {
     reply, err := redis.String(r.Do("SETEX", key, int64(timeout/time.Second), val))
     if err != nil {
         logs.Error("msg[redis_setex_failed:%s]", err.Error())
-        return ""
+        return "", err
     }
-    return reply
+    return reply, nil
 }
-func (r *redisClient) MgetString(keys []string) []string {
+func (r *redisClient) MgetString(keys []string) ([]string, error) {
     tKeys := arrStr2ArrInterface(keys)
     rep, err := redis.Strings(r.Do("MGET", tKeys...))
     if err != nil {
         logs.Error("msg[redis_mget_failed:%s]", err.Error())
     }
-    return rep
+    return rep, err
 }
 func (r *redisClient) Mget(keys []string) ([]interface{}, error) {
     tKeys := arrStr2ArrInterface(keys)
@@ -63,47 +62,43 @@ func (r *redisClient) Mget(keys []string) ([]interface{}, error) {
     return rep, err
 }
 
-func (r *redisClient) Exists(key string) bool{
+func (r *redisClient) Exists(key string) (bool, error){
     rep, err :=redis.Bool(r.Do("EXISTS", key))
     if err!=nil{
         logs.Error("msg[redis_exists_failed:%s]", err.Error())
-        return false
     }
-    return rep
+    return rep, err
 }
 
-func (r *redisClient) Del(keys []string) int {
+func (r *redisClient) Del(keys []string) (int, error) {
     tKeys := arrStr2ArrInterface(keys)
     num, err := redis.Int(r.Do("DEL", tKeys...))
     if err != nil {
         logs.Error("msg[redis_del_failed:%s]", err.Error())
-        return 0
     }
-    return num
+    return num, err
 }
 // Incr increase counter in redis.
-func (r *redisClient) Incr(key string) bool {
+func (r *redisClient) Incr(key string) (bool, error) {
     rep, err := redis.Bool(r.Do("INCR", key))
     if err != nil {
         logs.Error("msg[redis_incr_failed:%s]", err.Error())
-        return false
     }
-    return rep
+    return rep, err
 }
 
 // Decr decrease counter in redis.
-func (r *redisClient) Decr(key string) bool {
+func (r *redisClient) Decr(key string) (bool, error) {
     rep, err := redis.Bool(r.Do("DECR", key))
     if err != nil {
         logs.Error("msg[redis_decr_failed:%s]", err.Error())
-        return false
     }
-    return rep
+    return rep, err
 }
-func (r *redisClient) initRedisPool() {
+func (r *redisClient) initRedisPool(conf map[string]string) {
     once.Do(func() {
         dialFunc := func() (c redis.Conn, err error) {
-            addr := beego.AppConfig.String("redis.host") + ":" + beego.AppConfig.String("redis.port")
+            addr := conf["host"] + ":" + conf["port"]
             c, err = redis.Dial("tcp", addr)
             if err != nil {
                 logs.Info("msg[conn_to_redis_failure:%s] addr[%s]", err.Error(), addr)
@@ -146,5 +141,13 @@ func (r *redisClient) Do(commandName string, args ...interface{}) (reply interfa
 
 func init() {
     RedisClient = &redisClient{}
-    RedisClient.initRedisPool()
+    //conf := map[string]string{
+    //    "host": beego.AppConfig.String("redis.host"),
+    //    "port": beego.AppConfig.String("redis.port"),
+    //}
+    conf := map[string]string{
+        "host": "127.0.0.1",
+        "port": "6379",
+    }
+    RedisClient.initRedisPool(conf)
 }

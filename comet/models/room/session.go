@@ -131,7 +131,18 @@ func (s *Session) do(msg *models.Msg){
 			data["content"] = "房间不存在"
 			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
 		} else {
-			room.Join(*s)
+			ru := RUser{SId:s.Id,User:*s.User, IP:s.IP}
+			res, err := room.Join(RUser{SId:s.Id,User:*s.User, IP:s.IP})
+			if err!=nil{
+				beego.Error(err)
+			}
+			if res {
+				data := make(map[string]interface{})
+				data["room_id"] = room.Id
+				data["content"] = ru.User.Name + "进入房间"
+				msg := models.NewMsg(models.TYPE_ROOM_MSG, data)
+				room.Broadcast(msg)
+			}
 		}
 	case models.TYPE_LEAVE_ROOM:
 		if _, ok := msg.Data["room_id"]; !ok {
@@ -145,7 +156,7 @@ func (s *Session) do(msg *models.Msg){
 			return
 		}
 		if room != nil {
-			room.Leave(*s)
+			room.Leave(RUser{SId:s.Id,User:*s.User, IP:s.IP})
 		}
 	}
 }
