@@ -6,6 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
+	"webim/comet/models"
 )
 // WebSocketController handles WebSocket requests.
 type WebSocketController struct {
@@ -24,4 +25,9 @@ func (c *WebSocketController) Get() {
 		return
 	}
 	room.NewSession(conn, room.SessionManager).Run()
+}
+func (c *WebIMController) SendMsg(){
+	sId := c.GetString("sid")
+	msg := models.NewMsg(models.TYPE_COMMON_MSG, map[string]interface{}{"content":"qwqwq"})
+	room.SessionManager.SendMsg(sId, msg)
 }

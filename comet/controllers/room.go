@@ -7,21 +7,13 @@ type RoomController struct {
 }
 
 func (c *RoomController) Create() {
-	roomId, err := c.GetInt("id")
-	if err !=nil{
-		c.error(err.Error())
-		return
-	}
-	room.SessionManager.AddRoom(roomId)
+	roomId := c.GetString("id")
+	room.NewRoom(roomId, "")
 	c.success(nil)
 }
 
 func (c *RoomController) Delete(){
-	roomId, err := c.GetInt("id")
-	if err !=nil{
-		c.error(err.Error())
-		return
-	}
-	room.SessionManager.DelRoom(roomId)
+	roomId := c.GetString("id")
+	room.DelRoom(roomId)
 	c.success(nil)
 }

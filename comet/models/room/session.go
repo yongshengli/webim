@@ -1,12 +1,12 @@
 package room
 
 import (
-	"container/list"
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 	"encoding/json"
 	"webim/comet/models"
+	"github.com/satori/go.uuid"
 )
 
 type User struct {
@@ -20,8 +20,7 @@ type Session struct {
 	User *User
 	Conn  *websocket.Conn
 	Manager *Manager
-	P *list.Element
-	Ip string //用户所属机器ip
+	IP string //用户所属机器ip
 	reqChan chan *models.Msg
 	repChan chan *models.Msg
 }
@@ -31,10 +30,13 @@ func NewSession(conn *websocket.Conn, m *Manager) *Session{
 		Name:"匿名用户",
 	}
 	return &Session{
-		User: u,
-		Conn:conn, Manager:m,
-		reqChan:make(chan *models.Msg, 1000),
-		repChan:make(chan *models.Msg, 1000),
+		Id:      uuid.NewV4().String(),
+		User:    u,
+		Conn:    conn,
+		Manager: m,
+		IP:      conn.LocalAddr().String(),
+		reqChan: make(chan *models.Msg, 1000),
+		repChan: make(chan *models.Msg, 1000),
 	}
 }
 
@@ -80,10 +82,14 @@ func (s *Session) do(msg *models.Msg){
 			beego.Warn("room_id 为空")
 			return
 		}
-		roomId := int(msg.Data["room_id"].(float64))
-		room := s.Manager.GetRoom(roomId)
+		roomId := msg.Data["room_id"].(string)
+		room, err := GetRoom(roomId)
+		if err!=nil{
+			beego.Error(err)
+			return
+		}
 		if room == nil {
-			s.Manager.AddRoom(roomId)
+			NewRoom(roomId, "")
 			data := make(map[string]interface{})
 			data["content"] = "创建房间成功"
 			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
@@ -96,8 +102,12 @@ func (s *Session) do(msg *models.Msg){
 			beego.Warn("room_id 为空")
 			return
 		}
-		roomId := int(msg.Data["room_id"].(float64))
-		room := s.Manager.GetRoom(roomId)
+		roomId := msg.Data["room_id"].(string)
+		room, err := GetRoom(roomId)
+		if err!=nil{
+			beego.Error(err)
+			return
+		}
 		if room == nil {
 			data := make(map[string]interface{})
 			data["content"] = "房间不存在"
@@ -110,8 +120,12 @@ func (s *Session) do(msg *models.Msg){
 			beego.Warn("room_id 为空")
 			return
 		}
-		roomId := int(msg.Data["room_id"].(float64))
-		room := s.Manager.GetRoom(roomId)
+		roomId := msg.Data["room_id"].(string)
+		room, err := GetRoom(roomId)
+		if err!=nil{
+			beego.Error(err)
+			return
+		}
 		if room == nil {
 			data := make(map[string]interface{})
 			data["content"] = "房间不存在"
@@ -124,8 +138,12 @@ func (s *Session) do(msg *models.Msg){
 			fmt.Println("room_id 为空")
 			return
 		}
-		roomId := int(msg.Data["room_id"].(float64))
-		room := s.Manager.GetRoom(roomId)
+		roomId := msg.Data["room_id"].(string)
+		room , err := GetRoom(roomId)
+		if err != nil {
+			beego.Error(err)
+			return
+		}
 		if room != nil {
 			room.Leave(*s)
 		}

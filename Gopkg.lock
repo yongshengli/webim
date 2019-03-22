@@ -35,9 +35,15 @@
   revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
   version = "v1.4.0"
 
+[[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b52218f21e9f96e92630cd43a6c7b50446027a9af0f842d8b63bf58c34a7cf6a"
+  inputs-digest = "54433156b3566d155fd7c55f678c70326f08599d5e13ff0edf9470dabda15344"
   solver-name = "gps-cdcl"
   solver-version = 1
