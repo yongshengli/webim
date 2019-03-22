@@ -9,7 +9,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"errors"
 	"time"
-	"log"
 )
 
 type RUser struct {
@@ -56,11 +55,11 @@ func DelRoom(id string) (int, error){
 }
 
 func roomKey(id string) string{
-	return "room:"+id
+	return "comet:room:"+id
 }
 
 func roomUserKey(roomId string) string{
-	return "roomUserList:"+roomId
+	return "comet:roomUserList:"+roomId
 }
 
 func (r *Room) Users() (map[string]string, error){
@@ -78,7 +77,6 @@ func (r *Room) Join(ru RUser) (bool, error){
 	//r.users[s.Id] = RUser{SId:s.Id, Ip:s.IP, User:*s.User}
 	user, err := common.RedisClient.Do("hget", roomUserKey(r.Id), ru.SId)
 	if err!= nil {
-		log.Println("dddd")
 		return false, err
 	}
 	if user!=nil{

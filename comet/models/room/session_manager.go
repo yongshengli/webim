@@ -6,6 +6,7 @@ import (
 	"errors"
 	"webim/comet/common"
 	"encoding/json"
+	"net/rpc"
 	"log"
 )
 var SessionManager *Manager
@@ -60,10 +61,9 @@ func Count() Monitor {
 	return monitor
 }
 
-func (m *Manager) SendMsg(sId string, msg *models.Msg) (bool, error){
-	if s, ok := m.sessions[sId]; ok{
-		s.Send(msg)
-		return true, nil
+func (m *Manager) SendMsgAll(sId string, msg models.Msg) (bool, error){
+	if _, ok := m.sessions[sId]; ok{
+		return m.SendMsg(sId, msg)
 	}else{
 		sessionJson, err := common.RedisClient.Get(sIdKey(sId))
 		if err!=nil{
@@ -77,19 +77,68 @@ func (m *Manager) SendMsg(sId string, msg *models.Msg) (bool, error){
 		if sessMap["IP"]==common.GetLocalIp(){
 			return false, errors.New("没有找到用户"+sId)
 		}
-		log.Println("发送给其他主机上的用户")
+		sMap, err := models.ServerManager.List()
+		if err != nil {
+			return false, err
+		}
+		for _, addr := range sMap{
+			client, err := rpc.Dial("tcp", addr)
+			if err != nil {
+				log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+				continue
+			}
+			args := map[string]interface{}{}
+			args["sid"] = sId
+			args["msg"] = msg
+			reply := false
+			client.Call("RpcFunc.Unicast", args, &reply)
+			log.Printf("发送广播addr%s, res:%s", addr, reply)
+		}
 		return true, nil
 	}
 }
-func (m *Manager) Broadcast(msg *models.Msg) bool {
-	for _, session := range m.sessions {
-		session.Send(msg)
+
+func (m *Manager) SendMsg(sId string, msg models.Msg) (bool, error){
+	if s, ok := m.sessions[sId]; ok {
+		s.Send(&msg)
+		return true, nil
 	}
-	return true
+	return false, errors.New("没有找到用户"+sId)
+}
+
+func (m *Manager) Broadcast(msg models.Msg) (bool, error) {
+	for _, session := range m.sessions {
+		session.Send(&msg)
+	}
+	sMap, err := models.ServerManager.List()
+	if err != nil {
+		return false, err
+	}
+	for _, addr := range sMap{
+		client, err := rpc.Dial("tcp", addr)
+		if err != nil {
+			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+			continue
+		}
+		args := map[string]interface{}{}
+		args["msg"] = msg
+		reply := false
+		client.Call("RpcFunc.Broadcast", args, &reply)
+		log.Printf("发送广播addr%s, res:%s", addr, reply)
+	}
+	return true, nil
+	return true, nil
+}
+
+func (m *Manager) BroadcastSelf(msg models.Msg) (bool, error) {
+	for _, session := range m.sessions {
+		session.Send(&msg)
+	}
+	return true, nil
 }
 func (m *Manager) GetSessionIp(sId string){
 
 }
 func sIdKey(sId string) string{
-	return "sessionId:" + sId
+	return "comet:sessionId:" + sId
 }

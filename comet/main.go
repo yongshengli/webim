@@ -20,6 +20,7 @@ import (
 	"github.com/beego/i18n"
 	"webim/comet/controllers"
 	_ "webim/comet/models/room"
+	_ "webim/comet/common"
 )
 
 func main() {
