@@ -9,11 +9,10 @@ type serverManger func()
 
 var (
     ServerManager = new(serverManger)
-    SelfAddr = common.GetLocalIp()
 )
 
-func (sm *serverManger) Register(ip string, port string) (int, error){
-    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), ip, port))
+func (sm *serverManger) Register(port string) (int, error){
+    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), common.GetLocalIp(), port))
 }
 
 func (sm *serverManger) List() (map[string]string, error) {

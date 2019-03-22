@@ -21,6 +21,7 @@ import (
 	"webim/comet/controllers"
 	_ "webim/comet/models/room"
 	_ "webim/comet/common"
+	"webim/comet/models"
 )
 
 func main() {
@@ -37,9 +38,12 @@ func main() {
 	beego.Router("/ws", &controllers.WebSocketController{})
 
 
-
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)
+	rpcPort := "9000"
+
+	go models.RunRpcServer(rpcPort)
+	models.ServerManager.Register(rpcPort)
 
 	beego.Run()
 }

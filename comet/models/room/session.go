@@ -24,10 +24,11 @@ type Session struct {
 	reqChan chan *models.Msg
 	repChan chan *models.Msg
 }
-func NewSession(conn *websocket.Conn, m *Manager) *Session{
+
+func NewSession(conn *websocket.Conn, m *Manager) *Session {
 	u := &User{
-		Id:0,
-		Name:"匿名用户",
+		Id:   0,
+		Name: "匿名用户",
 	}
 	return &Session{
 		Id:      uuid.NewV4().String(),
