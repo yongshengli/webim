@@ -22,10 +22,10 @@ func (rs *RpcFunc) Broadcast(args map[string]interface{}, reply *bool) error {
     return err
 }
 
-func run() {
+func run(port string) {
     rpcFunc := new(RpcFunc)
     rpc.Register(rpcFunc)
-    tcpAddr, err := net.ResolveTCPAddr("tcp", ":9000")
+    tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 
     if err != nil {
         fmt.Println("错误了哦")

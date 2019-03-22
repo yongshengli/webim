@@ -81,7 +81,8 @@ func (m *Manager) SendMsgAll(sId string, msg models.Msg) (bool, error){
 		if err != nil {
 			return false, err
 		}
-		for _, addr := range sMap{
+		for ip, port := range sMap{
+			addr := ip + ":" + port
 			client, err := rpc.Dial("tcp", addr)
 			if err != nil {
 				log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
@@ -114,7 +115,8 @@ func (m *Manager) Broadcast(msg models.Msg) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	for _, addr := range sMap{
+	for ip, port := range sMap {
+		addr := ip + ":" + port
 		client, err := rpc.Dial("tcp", addr)
 		if err != nil {
 			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())

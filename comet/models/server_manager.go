@@ -7,25 +7,28 @@ import (
 
 type serverManger func()
 
-var ServerManager = new(serverManger)
+var (
+    ServerManager = new(serverManger)
+    SelfAddr = common.GetLocalIp()
+)
 
-func (sm *serverManger) Register(addr string) (int, error){
-    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), addr, addr))
+func (sm *serverManger) Register(ip string, port string) (int, error){
+    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), ip, port))
 }
 
-func (sm *serverManger) List() (map[string]string, error){
+func (sm *serverManger) List() (map[string]string, error) {
     replay, err := common.RedisClient.Do("hgetall", serverMapKey())
-    if err!=nil{
+    if err != nil {
         return nil, err
     }
-    if replay==nil{
+    if replay == nil {
         return nil, nil
     }
     return redis.StringMap(replay, err)
 }
 
-func (sm *serverManger) Remove(addr string) (int, error){
-    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{addr}))
+func (sm *serverManger) Remove(ip string) (int, error){
+    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{ip}))
 }
 
 func serverMapKey() string{
