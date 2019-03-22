@@ -26,8 +26,8 @@ func (sm *serverManger) List() (map[string]string, error) {
     return redis.StringMap(replay, err)
 }
 
-func (sm *serverManger) Remove(ip string) (int, error){
-    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{ip}))
+func (sm *serverManger) Remove() (int, error){
+    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{common.GetLocalIp()}))
 }
 
 func serverMapKey() string{
