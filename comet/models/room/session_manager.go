@@ -6,6 +6,7 @@ import (
 	"errors"
 	"webim/comet/common"
 	"encoding/json"
+	"log"
 )
 var SessionManager *Manager
 
@@ -69,12 +70,15 @@ func (m *Manager) SendMsg(sId string, msg *models.Msg) (bool, error){
 			return false, err
 		}
 		var sessMap map[string]string
-		err = json.Unmarshal([]byte(sessionJson.(string)), &sessMap)
+		err = json.Unmarshal(sessionJson.([]byte), &sessMap)
 		if err!= nil{
 			return false, err
 		}
-
-		return false, errors.New("没有找到用户"+sId)
+		if sessMap["IP"]==common.GetLocalIp(){
+			return false, errors.New("没有找到用户"+sId)
+		}
+		log.Println("发送给其他主机上的用户")
+		return true, nil
 	}
 }
 func (m *Manager) Broadcast(msg *models.Msg) bool {
