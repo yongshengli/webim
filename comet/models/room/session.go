@@ -16,11 +16,12 @@ type User struct {
 }
 
 type Session struct {
+	Id string
 	User *User
 	Conn  *websocket.Conn
 	Manager *Manager
 	P *list.Element
-
+	Ip string //用户所属机器ip
 	reqChan chan *models.Msg
 	repChan chan *models.Msg
 }
@@ -116,7 +117,7 @@ func (s *Session) do(msg *models.Msg){
 			data["content"] = "房间不存在"
 			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
 		} else {
-			room.Join(s)
+			room.Join(*s)
 		}
 	case models.TYPE_LEAVE_ROOM:
 		if _, ok := msg.Data["room_id"]; !ok {
@@ -126,7 +127,7 @@ func (s *Session) do(msg *models.Msg){
 		roomId := int(msg.Data["room_id"].(float64))
 		room := s.Manager.GetRoom(roomId)
 		if room != nil {
-			room.Leave(s)
+			room.Leave(*s)
 		}
 	}
 }

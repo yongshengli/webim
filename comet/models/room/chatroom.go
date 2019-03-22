@@ -6,17 +6,17 @@ import (
 )
 
 type Room struct {
-	Id int
-	Manager *Manager
-	users map[*Session]int
+	Id      int      `json:"id"`
+	Manager *Manager `json:"manager"`
+	users   map[string]Session
 }
 
 func NewRoom(id int, m *Manager) *Room{
-	return &Room{Id:id, Manager:m, users:make(map[*Session]int)}
+	return &Room{Id:id, Manager:m, users:make(map[string]Session)}
 }
 
-func (r *Room) Join(s *Session) bool{
-	r.users[s] = 1
+func (r *Room) Join(s Session) bool{
+	r.users[s.Id] = s
 	data := make(map[string]interface{})
 	data["room_id"] = r.Id
 	data["content"] = s.User.Name + "进入房间"
@@ -25,11 +25,11 @@ func (r *Room) Join(s *Session) bool{
 	return true
 }
 
-func (r *Room) Leave(s *Session) bool{
-	if _, ok := r.users[s]; !ok {
+func (r *Room) Leave(s Session) bool{
+	if _, ok := r.users[s.Id]; !ok {
 		return true
 	}
-	delete(r.users, s)
+	delete(r.users, s.Id)
 	if len(r.users)<1 {
 		r.Manager.DelRoom(r.Id)
 		beego.Debug("房间%d内用户为空删除房间", r.Id)
@@ -42,7 +42,7 @@ func (r *Room) Leave(s *Session) bool{
 func (r *Room) Broadcast(msg *models.Msg) bool{
 	msg.Data["room_id"] = r.Id
 	beego.Debug("room broadcast")
-	for session, _ := range r.users{
+	for _, session := range r.users{
 		session.Send(msg)
 	}
 	return true
