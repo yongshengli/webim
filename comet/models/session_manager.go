@@ -92,7 +92,7 @@ func (m *sessionManager) SendMsgAll(sId string, msg Msg) (bool, error){
 			args["msg"] = msg
 			reply := false
 			client.Call("RpcFunc.Unicast", args, &reply)
-			log.Printf("发送广播addr%s, res:%s", addr, reply)
+			log.Printf("发送广播addr%s, res:%t", addr, reply)
 		}
 		return true, nil
 	}
@@ -125,9 +125,8 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 		args["msg"] = msg
 		reply := false
 		client.Call("RpcFunc.Broadcast", args, &reply)
-		log.Printf("发送广播addr%s, res:%s", addr, reply)
+		log.Printf("发送广播addr%s, res:%t", addr, reply)
 	}
-	return true, nil
 	return true, nil
 }
 

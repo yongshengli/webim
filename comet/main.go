@@ -19,10 +19,8 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 	"webim/comet/controllers"
-	_ "webim/comet/models/room"
 	_ "webim/comet/common"
 	"webim/comet/models"
-	"webim/comet/models/room"
 )
 
 func main() {
@@ -43,7 +41,7 @@ func main() {
 	beego.AddFuncMap("i18n", i18n.Tr)
 	rpcPort := "9000"
 
-	go room.RunRpcServer(rpcPort)
+	go models.RunRpcServer(rpcPort)
 	models.ServerManager.Register(rpcPort)
 
 	beego.Run()
