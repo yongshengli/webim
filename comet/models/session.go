@@ -1,11 +1,10 @@
-package room
+package models
 
 import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 	"encoding/json"
-	"webim/comet/models"
 	"github.com/satori/go.uuid"
 )
 
@@ -19,13 +18,13 @@ type Session struct {
 	Id string
 	User *User
 	Conn  *websocket.Conn
-	Manager *Manager
+	Manager *sessionManager
 	IP string //用户所属机器ip
-	reqChan chan *models.Msg
-	repChan chan *models.Msg
+	reqChan chan *Msg
+	repChan chan *Msg
 }
 
-func NewSession(conn *websocket.Conn, m *Manager) *Session {
+func NewSession(conn *websocket.Conn, m *sessionManager) *Session {
 	u := &User{
 		Id:   0,
 		Name: "匿名用户",
@@ -36,8 +35,8 @@ func NewSession(conn *websocket.Conn, m *Manager) *Session {
 		Conn:    conn,
 		Manager: m,
 		IP:      conn.LocalAddr().String(),
-		reqChan: make(chan *models.Msg, 1000),
-		repChan: make(chan *models.Msg, 1000),
+		reqChan: make(chan *Msg, 1000),
+		repChan: make(chan *Msg, 1000),
 	}
 }
 
@@ -58,12 +57,12 @@ func (s *Session) start(){
 		}
 	}
 }
-func (s *Session) Send(msg *models.Msg){
+func (s *Session) Send(msg *Msg){
 	beego.Debug("session send call")
 	s.repChan <- msg
 }
 
-func (s * Session) write(msg *models.Msg) bool{
+func (s * Session) write(msg *Msg) bool{
 	data, err := json.Marshal(msg)
 	if err != nil {
 		beego.Error("Fail to marshal event:", err)
@@ -76,9 +75,9 @@ func (s * Session) write(msg *models.Msg) bool{
 	return true
 }
 
-func (s *Session) do(msg *models.Msg){
+func (s *Session) do(msg *Msg){
 	switch msg.MsgType {
-	case models.TYPE_CREATE_ROOM:
+	case TYPE_CREATE_ROOM:
 		if _, ok := msg.Data["room_id"]; !ok {
 			beego.Warn("room_id 为空")
 			return
@@ -93,12 +92,12 @@ func (s *Session) do(msg *models.Msg){
 			NewRoom(roomId, "")
 			data := make(map[string]interface{})
 			data["content"] = "创建房间成功"
-			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
+			s.Send(NewMsg(TYPE_COMMON_MSG, data))
 		}
 		m := *msg
-		m.MsgType = models.TYPE_JOIN_ROOM
+		m.MsgType = TYPE_JOIN_ROOM
 		s.do(&m)
-	case models.TYPE_ROOM_MSG:
+	case TYPE_ROOM_MSG:
 		if _, ok := msg.Data["room_id"]; !ok {
 			beego.Warn("room_id 为空")
 			return
@@ -112,11 +111,11 @@ func (s *Session) do(msg *models.Msg){
 		if room == nil {
 			data := make(map[string]interface{})
 			data["content"] = "房间不存在"
-			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
+			s.Send(NewMsg(TYPE_COMMON_MSG, data))
 		} else {
 			room.Broadcast(msg)
 		}
-	case models.TYPE_JOIN_ROOM:
+	case TYPE_JOIN_ROOM:
 		if _, ok := msg.Data["room_id"]; !ok {
 			beego.Warn("room_id 为空")
 			return
@@ -130,7 +129,7 @@ func (s *Session) do(msg *models.Msg){
 		if room == nil {
 			data := make(map[string]interface{})
 			data["content"] = "房间不存在"
-			s.Send(models.NewMsg(models.TYPE_COMMON_MSG, data))
+			s.Send(NewMsg(TYPE_COMMON_MSG, data))
 		} else {
 			ru := RUser{SId:s.Id,User:*s.User, IP:s.IP}
 			res, err := room.Join(RUser{SId:s.Id,User:*s.User, IP:s.IP})
@@ -141,11 +140,11 @@ func (s *Session) do(msg *models.Msg){
 				data := make(map[string]interface{})
 				data["room_id"] = room.Id
 				data["content"] = ru.User.Name + "进入房间"
-				msg := models.NewMsg(models.TYPE_ROOM_MSG, data)
+				msg := NewMsg(TYPE_ROOM_MSG, data)
 				room.Broadcast(msg)
 			}
 		}
-	case models.TYPE_LEAVE_ROOM:
+	case TYPE_LEAVE_ROOM:
 		if _, ok := msg.Data["room_id"]; !ok {
 			fmt.Println("room_id 为空")
 			return
@@ -167,7 +166,7 @@ func (s *Session) read(){
 		if err != nil {
 			return
 		}
-		msg := new(models.Msg)
+		msg := new(Msg)
 		json.Unmarshal(p, msg)
 		s.reqChan <- msg
 	}

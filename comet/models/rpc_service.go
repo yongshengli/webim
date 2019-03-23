@@ -1,23 +1,22 @@
-package room
+package models
 
 import (
     "net/rpc"
     "net"
     "fmt"
     "os"
-    "webim/comet/models"
 )
 
 type RpcFunc func()
 
 func (rs *RpcFunc) Unicast(args map[string]interface{}, reply *bool) error {
-    res, err := SessionManager.SendMsg(args["sid"].(string), args["msg"].(models.Msg))
+    res, err := SessionManager.SendMsg(args["sid"].(string), args["msg"].(Msg))
     *reply = res
     return err
 }
 
 func (rs *RpcFunc) Broadcast(args map[string]interface{}, reply *bool) error {
-    res, err := SessionManager.BroadcastSelf(args["msg"].(models.Msg))
+    res, err := SessionManager.BroadcastSelf(args["msg"].(Msg))
     *reply = res
     return err
 }

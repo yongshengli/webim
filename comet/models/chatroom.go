@@ -1,8 +1,7 @@
-package room
+package models
 
 import (
 	"github.com/astaxie/beego"
-	"webim/comet/models"
 	"fmt"
 	"webim/comet/common"
 	"encoding/json"
@@ -114,7 +113,7 @@ func (r *Room) Leave(ru RUser) (bool, error){
 // This function handles all incoming chan messages.
 
 //房间内广播
-func (r *Room) Broadcast(msg *models.Msg) (bool, error){
+func (r *Room) Broadcast(msg *Msg) (bool, error){
 	msg.Data["room_id"] = r.Id
 	beego.Debug("room broadcast")
 	users, err := r.Users()
