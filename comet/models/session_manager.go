@@ -68,8 +68,7 @@ func (m *sessionManager) SendMsgAll(sId string, msg Msg) (bool, error){
 			return false, err
 		}
 		localAddr := common.GetLocalIp()
-		for ip, port := range sMap{
-			addr := ip + ":" + port
+		for addr, _ := range sMap{
 			if localAddr == addr {
 				continue
 			}
@@ -105,8 +104,7 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	for ip, port := range sMap {
-		addr := ip + ":" + port
+	for addr, _ := range sMap {
 		client, err := rpc.Dial("tcp", addr)
 		if err != nil {
 			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
