@@ -22,6 +22,7 @@ import (
 	_ "webim/comet/models/room"
 	_ "webim/comet/common"
 	"webim/comet/models"
+	"webim/comet/models/room"
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 	beego.AddFuncMap("i18n", i18n.Tr)
 	rpcPort := "9000"
 
-	go models.RunRpcServer(rpcPort)
+	go room.RunRpcServer(rpcPort)
 	models.ServerManager.Register(rpcPort)
 
 	beego.Run()
