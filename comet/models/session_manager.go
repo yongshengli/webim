@@ -19,7 +19,7 @@ func init() {
 		users:    make(map[int]string),
 		sessions: make(map[string]*Session),
 	}
-	beego.Debug("manager init")
+	beego.Debug("session manager init")
 }
 func (m *sessionManager) GetSessionByUid(uid int) *Session {
 
@@ -99,6 +99,7 @@ func (m *sessionManager) SendMsg(sId string, msg Msg) (bool, error){
 		s.Send(&msg)
 		return true, nil
 	}
+    log.Printf("没有找到用户%s", sId)
 	return false, errors.New("没有找到用户"+sId)
 }
 

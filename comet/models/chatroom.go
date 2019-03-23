@@ -7,7 +7,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"errors"
 	"time"
-	"fmt"
 )
 
 type RUser struct {
@@ -133,7 +132,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error){
 	if err!=nil{
 		return false, err
 	}
-	fmt.Println(users)
+	//fmt.Println(users)
 	for _, user := range users{
 		//fmt.Println(user)
 		//session.Send(msg)

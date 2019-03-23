@@ -1,5 +1,5 @@
 var socket;
-
+var sid;
 $(document).ready(function () {
     // Create a socket
     socket = new WebSocket('ws://' + window.location.host + '/ws?uname=' + $('#uname').text());
@@ -29,7 +29,9 @@ $(document).ready(function () {
         case 1: // MESSAGE
             var username = document.createElement('strong');
             var content = document.createElement('span');
-
+            if (data['sid']){
+                sid = data['sid']
+            }
             username.innerText = data.data['user'] || "匿名用户";
             content.innerText = data.data['content'];
 
@@ -53,7 +55,7 @@ $(document).ready(function () {
         var data = {
             "type": 1,
             "data": {
-                "room_id": "1",
+                "sid": sid,
                 "uname": $('#uname').text(),
                 content: $('#sendbox').val()
             }
