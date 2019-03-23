@@ -12,6 +12,8 @@ type User struct {
     Name          string                 `json:"name"`
     Platform      string                 `json:"platform"`
     ClientVersion string                 `json:"clientVersion"`
+
+    DeviceToken    string                 `json:"DeviceToken"` // CometToken = md5(udid+appKey)
     Info          map[string]interface{} `json:"info"`
     IP            string                 `json:"ip"`
 }
