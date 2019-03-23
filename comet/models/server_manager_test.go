@@ -1,15 +1,16 @@
 package models
 
-import "testing"
+import (
+    "testing"
+    "fmt"
+)
 
 func TestServerManger_Register(t *testing.T) {
-    res, err := ServerManager.Register("8000")
+    _, err := ServerManager.Register("8000")
     if err!=nil{
         t.Error(err)
     }
-    if res<1{
-        t.Error("注册主机失败")
-    }
+    //fmt.Println(res)
     sMap, err := ServerManager.List()
     if err!= nil{
         t.Error(err)
@@ -17,5 +18,6 @@ func TestServerManger_Register(t *testing.T) {
     if len(sMap)<1{
         t.Error("没有取到主机map")
     }
+    fmt.Println(sMap)
     ServerManager.Remove()
 }
