@@ -3,10 +3,9 @@ package models
 import (
 	"github.com/astaxie/beego"
 	"errors"
-	"webim/comet/common"
-	"encoding/json"
 	"net/rpc"
 	"log"
+	"webim/comet/common"
 )
 var SessionManager *sessionManager
 
@@ -64,24 +63,16 @@ func (m *sessionManager) SendMsgAll(sId string, msg Msg) (bool, error){
 	if _, ok := m.sessions[sId]; ok{
 		return m.SendMsg(sId, msg)
 	}else{
-		sessionJson, err := common.RedisClient.Get(sIdKey(sId))
-		if err!=nil{
-			return false, err
-		}
-		var sessMap map[string]string
-		err = json.Unmarshal(sessionJson.([]byte), &sessMap)
-		if err!= nil{
-			return false, err
-		}
-		if sessMap["IP"]==common.GetLocalIp(){
-			return false, errors.New("没有找到用户"+sId)
-		}
 		sMap, err := ServerManager.List()
 		if err != nil {
 			return false, err
 		}
+		localAddr := common.GetLocalIp()
 		for ip, port := range sMap{
 			addr := ip + ":" + port
+			if localAddr == addr {
+				continue
+			}
 			client, err := rpc.Dial("tcp", addr)
 			if err != nil {
 				log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())

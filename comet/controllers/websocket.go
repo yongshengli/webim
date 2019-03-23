@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"webim/comet/models/room"
 	"net/http"
 
 	"github.com/astaxie/beego"
@@ -24,10 +23,10 @@ func (c *WebSocketController) Get() {
 		beego.Error("Cannot setup WebSocket connection:", err)
 		return
 	}
-	room.NewSession(conn, room.SessionManager).Run()
+	models.NewSession(conn, models.SessionManager).Run()
 }
 func (c *WebIMController) SendMsg(){
 	sId := c.GetString("sid")
 	msg := models.NewMsg(models.TYPE_COMMON_MSG, map[string]interface{}{"content":"qwqwq"})
-	room.SessionManager.SendMsg(sId, msg)
+	models.SessionManager.SendMsg(sId, *msg)
 }

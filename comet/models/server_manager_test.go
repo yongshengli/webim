@@ -3,9 +3,11 @@ package models
 import (
     "testing"
     "fmt"
+    "webim/comet/common"
 )
 
 func TestServerManger_Register(t *testing.T) {
+    common.RedisInitTest()
     _, err := ServerManager.Register("8000")
     if err!=nil{
         t.Error(err)

@@ -1,67 +1,96 @@
-// Copyright 2013 Beego Samples authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License"): you may
-// not use this file except in compliance with the License. You may obtain
-// a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-
 package models
 
 import (
-	"container/list"
-	"time"
+	"github.com/astaxie/beego"
+	"fmt"
 )
 
-type EventType int
-
-const (
-	EVENT_CONN = iota
-	EVENT_DISCONN
-	EVENT_JOIN
-	EVENT_LEAVE
-	EVENT_MESSAGE
-	EVENT_LOGIN
-	EVENT_LOGOUT
-)
-
-type Event struct {
-	Type      EventType                   `json:"type"` // JOIN, LEAVE, MESSAGE
-	Data      map[interface{}]interface{} `json:"data"`
-	Timestamp int                         `time:"time"` // Unix timestamp (secs)
+type Command struct {
+	*Msg
 }
 
-const archiveSize = 20
-
-func NewEvent(ep EventType, data map[interface{}]interface{}) Event {
-	return Event{Type: ep, Data: data, Timestamp: int(time.Now().Unix())}
-}
-
-// Event archives.
-var archive = list.New()
-
-// NewArchive saves new event to archive list.
-func NewArchive(event Event) {
-	if archive.Len() >= archiveSize {
-		archive.Remove(archive.Front())
-	}
-	archive.PushBack(event)
-}
-
-// GetEvents returns all events after lastReceived.
-func GetEvents(lastReceived int) []Event {
-	events := make([]Event, 0, archive.Len())
-	for event := archive.Front(); event != nil; event = event.Next() {
-		e := event.Value.(Event)
-		if e.Timestamp > int(lastReceived) {
-			events = append(events, e)
+func (c *Command) Run(s *Session){
+	switch c.MsgType {
+	case TYPE_CREATE_ROOM:
+		if _, ok := c.Msg.Data["room_id"]; !ok {
+			beego.Warn("room_id 为空")
+			return
+		}
+		roomId := c.Msg.Data["room_id"].(string)
+		room, err := GetRoom(roomId)
+		if err!=nil{
+			beego.Error(err)
+			return
+		}
+		if room == nil {
+			NewRoom(roomId, "")
+			data := make(map[string]interface{})
+			data["content"] = "创建房间成功"
+			s.Send(NewMsg(TYPE_COMMON_MSG, data))
+		}
+		m := *c.Msg
+		m.MsgType = TYPE_JOIN_ROOM
+		s.do(&m)
+	case TYPE_ROOM_MSG:
+		if _, ok := c.Data["room_id"]; !ok {
+			beego.Warn("room_id 为空")
+			return
+		}
+		roomId := c.Data["room_id"].(string)
+		room, err := GetRoom(roomId)
+		if err!=nil{
+			beego.Error(err)
+			return
+		}
+		if room == nil {
+			data := make(map[string]interface{})
+			data["content"] = "房间不存在"
+			s.Send(NewMsg(TYPE_COMMON_MSG, data))
+		} else {
+			room.Broadcast(c.Msg)
+		}
+	case TYPE_JOIN_ROOM:
+		if _, ok := c.Data["room_id"]; !ok {
+			beego.Warn("room_id 为空")
+			return
+		}
+		roomId := c.Data["room_id"].(string)
+		room, err := GetRoom(roomId)
+		if err!=nil{
+			beego.Error(err)
+			return
+		}
+		if room == nil {
+			data := make(map[string]interface{})
+			data["content"] = "房间不存在"
+			s.Send(NewMsg(TYPE_COMMON_MSG, data))
+		} else {
+			ru := RUser{SId:s.Id,User:*s.User, IP:s.IP}
+			res, err := room.Join(RUser{SId:s.Id,User:*s.User, IP:s.IP})
+			if err!=nil{
+				beego.Error(err)
+			}
+			if res {
+				data := make(map[string]interface{})
+				data["room_id"] = room.Id
+				data["content"] = ru.User.Name + "进入房间"
+				msg := NewMsg(TYPE_ROOM_MSG, data)
+				room.Broadcast(msg)
+			}
+		}
+	case TYPE_LEAVE_ROOM:
+		if _, ok := c.Data["room_id"]; !ok {
+			fmt.Println("room_id 为空")
+			return
+		}
+		roomId := c.Data["room_id"].(string)
+		room , err := GetRoom(roomId)
+		if err != nil {
+			beego.Error(err)
+			return
+		}
+		if room != nil {
+			room.Leave(RUser{SId:s.Id,User:*s.User, IP:s.IP})
 		}
 	}
-	return events
 }

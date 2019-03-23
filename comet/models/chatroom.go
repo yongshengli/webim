@@ -41,6 +41,9 @@ func GetRoom(id string) (*Room, error){
 	if err!=nil{
 		return nil, err
 	}
+	if roomJson==nil{
+		return nil, nil
+	}
 	var room Room
 	err = json.Unmarshal(roomJson.([]byte), &room)
 	if err!=nil{

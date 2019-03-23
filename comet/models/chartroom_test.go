@@ -3,9 +3,10 @@ package models
 import (
     "testing"
     "github.com/satori/go.uuid"
+    "webim/comet/common"
 )
-
 func TestNewRoom(t *testing.T) {
+    common.RedisInitTest()
     roomId := "123"
     room, err := NewRoom(roomId, "")
     if err!=nil{

@@ -139,15 +139,13 @@ func (r *redisClient) Do(commandName string, args ...interface{}) (reply interfa
     return conn.Do(commandName, args...)
 }
 
-func init() {
+func RedisInit(conf map[string]string) {
     RedisClient = &redisClient{}
-    //conf := map[string]string{
-    //    "host": beego.AppConfig.String("redis.host"),
-    //    "port": beego.AppConfig.String("redis.port"),
-    //}
-    conf := map[string]string{
+    RedisClient.initRedisPool(conf)
+}
+func RedisInitTest(){
+    RedisInit(map[string]string{
         "host": "127.0.0.1",
         "port": "6379",
-    }
-    RedisClient.initRedisPool(conf)
+    })
 }
