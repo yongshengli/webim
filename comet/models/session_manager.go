@@ -38,6 +38,12 @@ func (m *sessionManager) AddSession(s *Session) bool{
 
 func (m *sessionManager) DelSession(s *Session) bool{
 	delete(m.sessions, s.Id)
+	if s.RoomId!=""{
+		room, _ := GetRoom(s.RoomId)
+		if room!=nil{
+			room.Leave(s.Id)
+		}
+	}
 	if s.User.Id>0{
 		delete(m.users, s.User.Id)
 		return true

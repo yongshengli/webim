@@ -9,7 +9,9 @@ type Command struct {
     *Msg
     s *Session
 }
-
+func NewCommand(msg *Msg, s *Session) *Command{
+    return &Command{msg, s}
+}
 func (c *Command) Run(s *Session) {
     c.s = s
     switch c.MsgType {
@@ -35,7 +37,7 @@ func (c *Command) leaveRoom() {
         return
     }
     if room != nil {
-        room.Leave(RUser{SId: c.s.Id, User: *c.s.User, IP: c.s.IP})
+        room.Leave(c.s.Id)
     }
 }
 func (c *Command) joinRoom() {
@@ -54,8 +56,9 @@ func (c *Command) joinRoom() {
         data["content"] = "房间不存在"
         c.s.Send(NewMsg(TYPE_COMMON_MSG, data))
     } else {
-        ru := RUser{SId: c.s.Id, User: *c.s.User, IP: c.s.IP}
-        res, err := room.Join(RUser{SId: c.s.Id, User: *c.s.User, IP: c.s.IP})
+        ru := RUser{SId: c.s.Id, User: *c.s.User, Addr: c.s.Addr}
+        res, err := room.Join(RUser{SId: c.s.Id, User: *c.s.User, Addr: c.s.Addr})
+        c.s.RoomId = roomId
         if err != nil {
             beego.Error(err)
         }

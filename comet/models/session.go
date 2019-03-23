@@ -16,9 +16,10 @@ type User struct {
 type Session struct {
 	Id string
 	User *User
+	RoomId string
 	Conn  *websocket.Conn
 	Manager *sessionManager
-	IP string //用户所属机器ip
+	Addr string //用户所属机器ip
 	reqChan chan *Msg
 	repChan chan *Msg
 }
@@ -33,7 +34,7 @@ func NewSession(conn *websocket.Conn, m *sessionManager) *Session {
 		User:    u,
 		Conn:    conn,
 		Manager: m,
-		IP:      conn.LocalAddr().String(),
+		Addr:    CurrentServer["host"]+":"+CurrentServer["port"],
 		reqChan: make(chan *Msg, 1000),
 		repChan: make(chan *Msg, 1000),
 	}
@@ -75,7 +76,7 @@ func (s * Session) write(msg *Msg) bool{
 }
 
 func (s *Session) do(msg *Msg){
-	Command{msg}.Run(s)
+	NewCommand(msg, s).Run(s)
 }
 func (s *Session) read(){
 	for {
@@ -89,6 +90,6 @@ func (s *Session) read(){
 	}
 }
 func (s *Session) Close(){
-	s.Conn.Close()
+	defer s.Conn.Close()
 	s.Manager.DelSession(s)
 }

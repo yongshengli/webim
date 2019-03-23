@@ -9,7 +9,7 @@ const (
 	TYPE_LEAVE_ROOM    = 3 //退出房间
 	TYPE_CREATE_ROOM   = 4
 	TYPE_LOGIN         = 5  //登录
-	TYPE_LOGOUT        = 6  //登出
+	TYPE_LOGOUT        = 6  //退出
 	TYPE_BROADCAST_MSG = 10 //广播消息
 )
 type MsgType int

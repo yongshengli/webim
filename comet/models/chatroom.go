@@ -2,17 +2,17 @@ package models
 
 import (
 	"github.com/astaxie/beego"
-	"fmt"
 	"webim/comet/common"
 	"encoding/json"
 	"github.com/gomodule/redigo/redis"
 	"errors"
 	"time"
+	"fmt"
 )
 
 type RUser struct {
 	SId  string `json:"sid"`
-	IP   string `json:"ip"`   //sid 所在机器ip
+	Addr string `json:"ip"`   //sid 所在机器ip
 	User User   `json:"user"` //用户数据
 }
 type Room struct {
@@ -98,8 +98,8 @@ func (r *Room) Join(ru RUser) (bool, error){
 	return true, nil
 }
 
-func (r *Room) Leave(ru RUser) (bool, error){
-	_, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), ru.SId)
+func (r *Room) Leave(sId string) (bool, error){
+	_, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), sId)
 	if err!=nil{
 		return false, err
 	}
@@ -126,6 +126,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error){
 	for _, user := range users{
 		fmt.Println(user)
 		//session.Send(msg)
+
 	}
 	return true, nil
 }
