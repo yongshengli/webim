@@ -64,7 +64,7 @@ func roomUserKey(roomId string) string{
 	return "comet:roomUserList:"+roomId
 }
 
-func (r *Room) Users() (map[string]string, error){
+func (r *Room) Users() (map[string]interface{}, error){
 	replay, err := common.RedisClient.Do("hgetall", roomUserKey(r.Id))
 	if err!=nil{
 		return nil, err
@@ -72,7 +72,17 @@ func (r *Room) Users() (map[string]string, error){
 	if replay==nil{
 		return nil, nil
 	}
-	return redis.StringMap(replay, err)
+	tmap, err := redis.StringMap(replay, err)
+	if err!=nil{
+		return nil, err
+	}
+	res := map[string]interface{}{}
+	for sid, st := range tmap {
+		ru := RUser{}
+		json.Unmarshal([]byte(st), &ru)
+		res[sid] = ru
+	}
+	return res, nil
 }
 
 func (r *Room) Join(ru RUser) (bool, error){
@@ -123,10 +133,11 @@ func (r *Room) Broadcast(msg *Msg) (bool, error){
 	if err!=nil{
 		return false, err
 	}
+	fmt.Println(users)
 	for _, user := range users{
-		fmt.Println(user)
+		//fmt.Println(user)
 		//session.Send(msg)
-
+        SessionManager.SendMsgAll(user.(RUser).SId, *msg)
 	}
 	return true, nil
 }
