@@ -81,7 +81,7 @@ func (s *Session) write(msg *Msg) bool {
 }
 
 func (s *Session) do(msg *Msg) {
-    NewCommand(msg, s).Run(s)
+    NewJob(*msg).Run(s)
 }
 func (s *Session) read() {
     for {

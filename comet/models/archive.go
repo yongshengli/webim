@@ -3,49 +3,60 @@ package models
 import (
     "github.com/astaxie/beego"
     "fmt"
+    "webim/comet/common"
+    "github.com/satori/go.uuid"
+    "time"
 )
 
-type Command struct {
-    *Msg
-    s *Session
+func NewJob(msg Msg) *Job {
+    return &Job{Version: msg.Data["version"].(string),
+        ReqID: msg.Data["req_id"].(string),
+        TraceID: uuid.NewV4().String(),
+        ReqTime: time.Now().Unix(),
+        Req: msg,
+        s: nil}
 }
-func NewCommand(msg *Msg, s *Session) *Command{
-    return &Command{msg, s}
-}
-func (c *Command) Run(s *Session) {
-    c.s = s
-    switch c.MsgType {
+func (j *Job) Run(s *Session) {
+    j.s = s
+    switch j.Req.MsgType {
     case TYPE_CREATE_ROOM:
-        c.createRoom()
+        j.createRoom()
     case TYPE_ROOM_MSG:
-        c.roomMsg()
+        j.roomMsg()
     case TYPE_JOIN_ROOM:
-        c.joinRoom()
+        j.joinRoom()
     case TYPE_LEAVE_ROOM:
-        c.leaveRoom()
+        j.leaveRoom()
     }
 }
-func (c *Command) leaveRoom() {
-    if _, ok := c.Data["room_id"]; !ok {
+func (j *Job) register() {
+    if _, ok := j.Req.Data["device_id"]; !ok{
+
+    }
+    deviceToken := common.GenerateDeviceToken(j.Data["device_id"].(string), j.Data["appkey"].(string))
+    j.s.Send(NewMsg(TYPE_COMMON_MSG, map[string]interface{}{"device_token":deviceToken}))
+}
+func (j *Job) leaveRoom() {
+    if _, ok := j.Req.Data["room_id"]; !ok {
         fmt.Println("room_id 为空")
         return
     }
-    roomId := c.Data["room_id"].(string)
+    roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         beego.Error(err)
         return
     }
     if room != nil {
-        room.Leave(c.s.Id)
+        room.Leave(j.s.Id)
     }
 }
-func (c *Command) joinRoom() {
-    if _, ok := c.Data["room_id"]; !ok {
+func (j *Job) joinRoom() {
+    if _, ok := j.Req.Data["room_id"]; !ok {
         beego.Warn("room_id 为空")
         return
     }
-    roomId := c.Data["room_id"].(string)
+    roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         beego.Error(err)
@@ -54,11 +65,11 @@ func (c *Command) joinRoom() {
     if room == nil {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
-        c.s.Send(NewMsg(TYPE_COMMON_MSG, data))
+        j.s.Send(NewMsg(TYPE_COMMON_MSG, data))
     } else {
-        ru := RUser{SId: c.s.Id, User: *c.s.User, Addr: c.s.Addr}
-        res, err := room.Join(RUser{SId: c.s.Id, User: *c.s.User, Addr: c.s.Addr})
-        c.s.RoomId = roomId
+        ru := RUser{SId: j.s.Id, User: *j.s.User, Addr: j.s.Addr}
+        res, err := room.Join(RUser{SId: j.s.Id, User: *j.s.User, Addr: j.s.Addr})
+        j.s.RoomId = roomId
         if err != nil {
             beego.Error(err)
         }
@@ -71,12 +82,12 @@ func (c *Command) joinRoom() {
         }
     }
 }
-func (c *Command) roomMsg() {
-    if _, ok := c.Data["room_id"]; !ok {
+func (j *Job) roomMsg() {
+    if _, ok := j.Req.Data["room_id"]; !ok {
         beego.Warn("room_id 为空")
         return
     }
-    roomId := c.Data["room_id"].(string)
+    roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         beego.Error(err)
@@ -85,17 +96,17 @@ func (c *Command) roomMsg() {
     if room == nil {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
-        c.s.Send(NewMsg(TYPE_COMMON_MSG, data))
+        j.s.Send(NewMsg(TYPE_COMMON_MSG, data))
     } else {
-        room.Broadcast(c.Msg)
+        room.Broadcast(&j.Req)
     }
 }
-func (c *Command) createRoom() {
-    if _, ok := c.Msg.Data["room_id"]; !ok {
+func (j *Job) createRoom() {
+    if _, ok := j.Req.Data["room_id"]; !ok {
         beego.Warn("room_id 为空")
         return
     }
-    roomId := c.Msg.Data["room_id"].(string)
+    roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         beego.Error(err)
@@ -105,9 +116,9 @@ func (c *Command) createRoom() {
         NewRoom(roomId, "")
         data := make(map[string]interface{})
         data["content"] = "创建房间成功"
-        c.s.Send(NewMsg(TYPE_COMMON_MSG, data))
+        j.s.Send(NewMsg(TYPE_COMMON_MSG, data))
     }
-    m := *c.Msg
-    m.MsgType = TYPE_JOIN_ROOM
-    c.s.do(&m)
+    j.Rsp = j.Req
+    j.Rsp.MsgType = TYPE_JOIN_ROOM
+    j.s.Send(&j.Rsp)
 }
