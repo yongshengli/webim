@@ -18,21 +18,13 @@ type JobWorker struct {
     s *Session
 }
 func NewJobWork(msg Msg, s *Session) *JobWorker {
-    reqId := ""
-    version := ""
-    if v, ok := msg.Data["req_id"]; ok {
-        reqId = v.(string)
-    }
-    if v, ok := msg.Data["version"]; ok {
-        version = v.(string)
-    }
     job := &Job{
-        Version: version,
-        ReqID:   reqId,
         TraceID: uuid.NewV4().String(),
         ReqTime: time.Now().Unix(),
         Req:     msg,
     }
+    job.Rsp.Version = job.Req.Version
+    job.Rsp.ReqId = job.Req.ReqId
     return &JobWorker{job, s}
 }
 /**
@@ -45,7 +37,7 @@ func (j *JobWorker) Log(){
 }
 func (j *JobWorker) Do() {
     defer j.Log()
-    if j.ReqID == "" {
+    if j.Req.ReqId == "" {
         beego.Error("req_id为空，不做任何处理")
         return
     }
@@ -62,12 +54,13 @@ func (j *JobWorker) Do() {
 }
 
 func (j *JobWorker) register() {
-    if _, ok := j.Req.Data["device_id"]; !ok{
+    if _, ok := j.Req.Data["device_id"]; !ok {
 
     }
     deviceToken := common.GenerateDeviceToken(j.Req.Data["device_id"].(string), j.Req.Data["appkey"].(string))
-    j.Rsp = *NewMsg(TYPE_COMMON_MSG, map[string]interface{}{"code":0, "device_token":deviceToken})
-    j.s.Send(j.Job)
+    j.Rsp.MsgType = TYPE_COMMON_MSG
+    j.Rsp.Data = map[string]interface{}{"code": 0, "device_token": deviceToken}
+    j.s.Send(&j.Rsp)
 }
 func (j *JobWorker) leaveRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
@@ -83,8 +76,9 @@ func (j *JobWorker) leaveRoom() {
     if room != nil {
         room.Leave(j.s.Id)
     }
-    j.Rsp = *NewMsg(TYPE_COMMON_MSG, map[string]interface{}{"code":0, "msg":"ok"})
-    j.s.Send(j.Job)
+    j.Rsp.MsgType = TYPE_COMMON_MSG
+    j.Rsp.Data = map[string]interface{}{"code":0, "content":"ok"}
+    j.s.Send(&j.Rsp)
 }
 func (j *JobWorker) joinRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
@@ -100,8 +94,9 @@ func (j *JobWorker) joinRoom() {
     if room == nil {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
-        j.Rsp = *NewMsg(TYPE_COMMON_MSG, data)
-        j.s.Send(j.Job)
+        j.Rsp.MsgType = TYPE_COMMON_MSG
+        j.Rsp.Data = data
+        j.s.Send(&j.Rsp)
     } else {
         ru := RUser{SId: j.s.Id, User: *j.s.User, Addr: j.s.Addr}
         res, err := room.Join(RUser{SId: j.s.Id, User: *j.s.User, Addr: j.s.Addr})
@@ -113,8 +108,9 @@ func (j *JobWorker) joinRoom() {
             data := make(map[string]interface{})
             data["room_id"] = room.Id
             data["content"] = ru.User.Name + "进入房间"
-            msg := NewMsg(TYPE_ROOM_MSG, data)
-            room.Broadcast(msg)
+            j.Rsp.MsgType = TYPE_COMMON_MSG
+            j.Rsp.Data = data
+            room.Broadcast(&j.Rsp)
         }
     }
 }
@@ -132,8 +128,9 @@ func (j *JobWorker) roomMsg() {
     if room == nil {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
-        j.Rsp = *NewMsg(TYPE_COMMON_MSG, data)
-        j.s.Send(j.Job)
+        j.Rsp.MsgType = TYPE_COMMON_MSG
+        j.Rsp.Data = data
+        j.s.Send(&j.Rsp)
     } else {
         room.Broadcast(&j.Req)
     }
@@ -151,13 +148,10 @@ func (j *JobWorker) createRoom() {
     }
     if room == nil {
         NewRoom(roomId, "")
-        data := make(map[string]interface{})
-        data["content"] = "创建房间成功"
-        j.Rsp = *NewMsg(TYPE_COMMON_MSG, data)
-        j.s.Send(j.Job)
-    }else {
-        j.Rsp = j.Req
-        j.Rsp.MsgType = TYPE_JOIN_ROOM
-        j.s.Send(j.Job)
     }
+    data := make(map[string]interface{})
+    data["content"] = "创建房间成功"
+    j.Rsp.MsgType=TYPE_COMMON_MSG
+    j.Rsp.Data= data
+    j.s.Send(&j.Rsp)
 }

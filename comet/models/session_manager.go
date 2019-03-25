@@ -104,6 +104,9 @@ func (m *sessionManager) SendMsg(sId string, msg Msg) (bool, error){
 }
 
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
+	if msg.MsgType!=TYPE_BROADCAST_MSG{
+		return false, errors.New("消息类型不是广播消息")
+	}
 	for _, session := range m.sessions {
 		session.Send(&msg)
 	}
@@ -111,7 +114,7 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	for addr, _ := range sMap {
+	for addr := range sMap {
 		client, err := rpc.Dial("tcp", addr)
 		if err != nil {
 			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
