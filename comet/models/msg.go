@@ -31,7 +31,6 @@ type Job struct {
 
 	Req Msg // 原请求信息
 	Rsp Msg // 响应信息
-
 	s *Session
 }
 

@@ -8,16 +8,23 @@ import (
     "time"
 )
 
-func NewJob(msg Msg) *Job {
-    return &Job{Version: msg.Data["version"].(string),
+type IWorker interface {
+    Do()
+}
+type JobWorker struct {
+    *Job
+    s *Session
+}
+func NewJobWork(msg Msg, s *Session) *JobWorker {
+    job := &Job{Version: msg.Data["version"].(string),
         ReqID: msg.Data["req_id"].(string),
         TraceID: uuid.NewV4().String(),
         ReqTime: time.Now().Unix(),
         Req: msg,
         s: nil}
+    return &JobWorker{job, s}
 }
-func (j *Job) Run(s *Session) {
-    j.s = s
+func (j *JobWorker) Do() {
     switch j.Req.MsgType {
     case TYPE_CREATE_ROOM:
         j.createRoom()
@@ -29,14 +36,14 @@ func (j *Job) Run(s *Session) {
         j.leaveRoom()
     }
 }
-func (j *Job) register() {
+func (j *JobWorker) register() {
     if _, ok := j.Req.Data["device_id"]; !ok{
 
     }
-    deviceToken := common.GenerateDeviceToken(j.Data["device_id"].(string), j.Data["appkey"].(string))
+    deviceToken := common.GenerateDeviceToken(j.Req.Data["device_id"].(string), j.Req.Data["appkey"].(string))
     j.s.Send(NewMsg(TYPE_COMMON_MSG, map[string]interface{}{"device_token":deviceToken}))
 }
-func (j *Job) leaveRoom() {
+func (j *JobWorker) leaveRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
         fmt.Println("room_id 为空")
         return
@@ -51,7 +58,7 @@ func (j *Job) leaveRoom() {
         room.Leave(j.s.Id)
     }
 }
-func (j *Job) joinRoom() {
+func (j *JobWorker) joinRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
         beego.Warn("room_id 为空")
         return
@@ -82,7 +89,7 @@ func (j *Job) joinRoom() {
         }
     }
 }
-func (j *Job) roomMsg() {
+func (j *JobWorker) roomMsg() {
     if _, ok := j.Req.Data["room_id"]; !ok {
         beego.Warn("room_id 为空")
         return
@@ -101,7 +108,7 @@ func (j *Job) roomMsg() {
         room.Broadcast(&j.Req)
     }
 }
-func (j *Job) createRoom() {
+func (j *JobWorker) createRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
         beego.Warn("room_id 为空")
         return
