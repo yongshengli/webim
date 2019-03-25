@@ -62,9 +62,12 @@ func (s *Session) start() {
         }
     }
 }
-func (s *Session) Send(msg *Msg) {
+func (s *Session) Send(job *Job) {
     beego.Debug("session send call")
-    s.repChan <- msg
+    job.Rsp.Data["version"] = job.Version
+    job.Rsp.Data["req_id"] = job.ReqID
+    job.Rsp.Data["encode"] = job.Encode
+    s.repChan <- &job.Rsp
 }
 
 func (s *Session) write(msg *Msg) bool {
