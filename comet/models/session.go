@@ -4,7 +4,6 @@ import (
     "github.com/astaxie/beego"
     "github.com/gorilla/websocket"
     "encoding/json"
-    "github.com/satori/go.uuid"
 )
 
 type User struct {
@@ -19,14 +18,14 @@ type User struct {
 }
 
 type Session struct {
-    Id      string
-    User    *User
-    RoomId  string
-    Conn    *websocket.Conn
-    Manager *sessionManager
-    Addr    string //用户所属机器ip
-    reqChan chan *Msg
-    repChan chan *Msg
+    DeviceToken string
+    User        *User
+    RoomId      string
+    Conn        *websocket.Conn
+    Manager     *sessionManager
+    Addr        string //用户所属机器ip
+    reqChan     chan *Msg
+    repChan     chan *Msg
 }
 
 func NewSession(conn *websocket.Conn, m *sessionManager) *Session {
@@ -35,7 +34,7 @@ func NewSession(conn *websocket.Conn, m *sessionManager) *Session {
         Name: "匿名用户",
     }
     return &Session{
-        Id:      uuid.NewV4().String(),
+        DeviceToken: "",
         User:    u,
         Conn:    conn,
         Manager: m,

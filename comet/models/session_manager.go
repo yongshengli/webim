@@ -2,10 +2,12 @@ package models
 
 import (
 	"github.com/astaxie/beego"
-	"errors"
-	"net/rpc"
-	"log"
 	"webim/comet/common"
+	"github.com/gomodule/redigo/redis"
+	"errors"
+	"log"
+	"encoding/json"
+	"net/rpc/jsonrpc"
 )
 var SessionManager *sessionManager
 
@@ -21,6 +23,9 @@ func init() {
 	}
 	beego.Debug("session manager init")
 }
+/**
+ 在本机查找session
+ */
 func (m *sessionManager) GetSessionByUid(uid int) *Session {
 
 	if _, ok := m.users[uid]; ok {
@@ -29,19 +34,25 @@ func (m *sessionManager) GetSessionByUid(uid int) *Session {
 	return nil
 }
 func (m *sessionManager) AddSession(s *Session) bool{
-	m.sessions[s.Id] = s
+	if len(s.DeviceToken)<1{
+		return false
+	}
+	m.sessions[s.DeviceToken] = s
 	if s.User.Id>0{
-		m.users[s.User.Id] = s.Id
+		m.users[s.User.Id] = s.DeviceToken
 	}
 	return true
 }
 
 func (m *sessionManager) DelSession(s *Session) bool{
-	delete(m.sessions, s.Id)
+	if len(s.DeviceToken)<1{
+		return false
+	}
+	delete(m.sessions, s.DeviceToken)
 	if s.RoomId!=""{
 		room, _ := GetRoom(s.RoomId)
 		if room!=nil{
-			room.Leave(s.Id)
+			room.Leave(s.DeviceToken)
 		}
 	}
 	if s.User.Id>0{
@@ -64,43 +75,31 @@ func Count() Monitor {
 	}
 	return monitor
 }
+/**
+ * 遍历所有机器给用户发消息
+ */
+func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
+	user, err := getDeviceTokenInfoByDeviceToken(deviceToken)
+	if user == nil {
+		return false, err
+	}
+	if user.Ip{
 
-func (m *sessionManager) SendMsgAll(sId string, msg Msg) (bool, error){
-	if _, ok := m.sessions[sId]; ok{
-		return m.SendMsg(sId, msg)
 	}else{
-		sMap, err := ServerManager.List()
+		//addr
+		client, err := jsonrpc.Dial("tcp", addr)
 		if err != nil {
+			beego.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
 			return false, err
 		}
-		localAddr := common.GetLocalIp()
-		for addr, _ := range sMap{
-			if localAddr == addr {
-				continue
-			}
-			client, err := rpc.Dial("tcp", addr)
-			if err != nil {
-				log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
-				continue
-			}
-			args := map[string]interface{}{}
-			args["sid"] = sId
-			args["msg"] = msg
-			reply := false
-			client.Call("RpcFunc.Unicast", args, &reply)
-			log.Printf("发送广播addr%s, res:%t", addr, reply)
-		}
+		args := map[string]interface{}{}
+		args["sid"] = sId
+		args["msg"] = msg
+		reply := false
+		client.Call("RpcFunc.Unicast", args, &reply)
+		log.Printf("发送单播addr%s, res:%t", addr, reply)
 		return true, nil
 	}
-}
-
-func (m *sessionManager) SendMsg(sId string, msg Msg) (bool, error){
-	if s, ok := m.sessions[sId]; ok {
-		s.Send(&msg)
-		return true, nil
-	}
-    log.Printf("没有找到用户%s", sId)
-	return false, errors.New("没有找到用户"+sId)
 }
 
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
@@ -115,7 +114,7 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 		return false, err
 	}
 	for addr := range sMap {
-		client, err := rpc.Dial("tcp", addr)
+		client, err := jsonrpc.Dial("tcp", addr)
 		if err != nil {
 			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
 			continue
@@ -135,9 +134,36 @@ func (m *sessionManager) BroadcastSelf(msg Msg) (bool, error) {
 	}
 	return true, nil
 }
-func (m *sessionManager) GetSessionIp(sId string){
 
+func delSeviceTokenInfo(deviceToken string) (int, error){
+	return common.RedisClient.Del([]string{deviceTokenKey(deviceToken)})
 }
-func sIdKey(sId string) string{
-	return "comet:sessionId:" + sId
+func saveDeviceTokenInfo(user User) (string, error){
+	if len(user.DeviceToken)<1{
+		return "", errors.New("DeviceToken为空")
+	}
+	jsonStr, err := json.Marshal(user)
+	if err!=nil{
+		beego.Error(err)
+		return "", err
+	}
+	return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, 3600*24)
+}
+func getDeviceTokenByUid(uid string) (string, error){
+	return redis.String(common.RedisClient.Get(uidKey(uid)))
+}
+func getDeviceTokenInfoByDeviceToken(deviceToken string) (map[string]string, error){
+	res := map[string]string{}
+	replay, err := common.RedisClient.Get(deviceTokenKey(deviceToken))
+	if replay==nil{
+		return res, err
+	}
+	return redis.StringMap(replay, err)
+}
+func deviceTokenKey(deviceToken string) string{
+	return "comet:token:" + deviceToken
+}
+
+func uidKey(uid string) string{
+	return "comet:uid:"+uid
 }

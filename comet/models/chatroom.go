@@ -136,7 +136,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error){
 	for _, user := range users{
 		//fmt.Println(user)
 		//session.Send(msg)
-        SessionManager.SendMsgAll(user.(RUser).SId, *msg)
+        SessionManager.SendMsg(user.(RUser).SId, *msg)
 	}
 	return true, nil
 }

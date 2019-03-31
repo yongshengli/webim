@@ -5,6 +5,7 @@ import (
     "net"
     "fmt"
     "os"
+    "net/rpc/jsonrpc"
 )
 
 type RpcFunc func()
@@ -37,6 +38,6 @@ func RunRpcServer(port string) {
         if err != nil {
             continue
         }
-        rpc.ServeConn(conn)
+        jsonrpc.ServeConn(conn)
     }
 }
