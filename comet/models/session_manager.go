@@ -83,23 +83,22 @@ func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
 	if user == nil {
 		return false, err
 	}
-	if user.Ip{
-
-	}else{
-		//addr
+	if ip, ok := user["IP"]; ok && len(ip)>1{
+		addr := ip+""
 		client, err := jsonrpc.Dial("tcp", addr)
 		if err != nil {
 			beego.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
 			return false, err
 		}
 		args := map[string]interface{}{}
-		args["sid"] = sId
+		args["device_token"] = deviceToken
 		args["msg"] = msg
 		reply := false
 		client.Call("RpcFunc.Unicast", args, &reply)
 		log.Printf("发送单播addr%s, res:%t", addr, reply)
 		return true, nil
 	}
+	return false, errors.New("设备不在线")
 }
 
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
