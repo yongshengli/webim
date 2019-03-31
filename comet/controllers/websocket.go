@@ -27,6 +27,6 @@ func (c *WebSocketController) Get() {
 }
 func (c *WebIMController) SendMsg(){
 	sId := c.GetString("sid")
-	msg := models.NewMsg(models.TYPE_COMMON_MSG, map[string]interface{}{"content":"qwqwq"})
-	models.SessionManager.SendMsg(sId, *msg)
+	msg := models.Msg{MsgType:models.TYPE_COMMON_MSG, Data:map[string]interface{}{"content":"qwqwq"}}
+	models.SessionManager.SendMsg(sId, msg)
 }
