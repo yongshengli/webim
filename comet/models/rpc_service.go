@@ -10,16 +10,26 @@ import (
 
 type RpcFunc func()
 
-func (rs *RpcFunc) Unicast(args map[string]interface{}, reply *bool) error {
+func (rf *RpcFunc) Unicast(args map[string]interface{}, reply *bool) error {
     res, err := SessionManager.Unicast(args["device_token"].(string), args["msg"].(Msg))
     *reply = res
     return err
 }
 
-func (rs *RpcFunc) Broadcast(args map[string]interface{}, reply *bool) error {
+func (rf *RpcFunc) Broadcast(args map[string]interface{}, reply *bool) error {
     res, err := SessionManager.BroadcastSelf(args["msg"].(Msg))
     *reply = res
     return err
+}
+
+func (rf *RpcFunc) Status(args map[string]interface{}, reply *map[string]interface{}) error{
+
+    return nil
+}
+
+func (rf *RpcFunc) Ping(args map[string]interface{}, reply *string) error{
+    *reply = "pong"
+    return nil
 }
 
 func RpcServer(port string) {
