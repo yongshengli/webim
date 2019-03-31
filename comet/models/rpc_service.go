@@ -11,7 +11,7 @@ import (
 type RpcFunc func()
 
 func (rs *RpcFunc) Unicast(args map[string]interface{}, reply *bool) error {
-    res, err := SessionManager.SendMsg(args["device_token"].(string), args["msg"].(Msg))
+    res, err := SessionManager.Unicast(args["device_token"].(string), args["msg"].(Msg))
     *reply = res
     return err
 }

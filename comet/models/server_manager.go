@@ -7,15 +7,18 @@ import (
 
 type serverManger func()
 
+type ServerInfo struct {
+    Host string
+    Port string
+}
 var (
     ServerManager = new(serverManger)
-    CurrentServer = map[string]string{}
+    CurrentServer ServerInfo
 )
 
 func (sm *serverManger) Register(port string) (int, error){
     addr := common.GetLocalIp()+":"+port
-    CurrentServer["host"] = common.GetLocalIp()
-    CurrentServer["port"] = port
+    CurrentServer = ServerInfo{Host:common.GetLocalIp(), Port:port}
 
     return redis.Int(common.RedisClient.Do("hset", serverMapKey(), addr, port))
 }

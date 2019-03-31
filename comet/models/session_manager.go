@@ -37,6 +37,12 @@ func (m *sessionManager) AddSession(s *Session) bool{
 	if len(s.DeviceToken)<1{
 		return false
 	}
+	//把session 信息保存到redis
+	_, err := saveDeviceTokenInfo(s.User)
+	if err!=nil{
+		beego.Error(err)
+		return false
+	}
 	m.sessions[s.DeviceToken] = s
 	if s.User.Id>0{
 		m.users[s.User.Id] = s.DeviceToken
@@ -47,6 +53,11 @@ func (m *sessionManager) AddSession(s *Session) bool{
 func (m *sessionManager) DelSession(s *Session) bool{
 	if len(s.DeviceToken)<1{
 		return false
+	}
+	//从redis中删除session
+	_, err := delDeviceTokenInfo(s.DeviceToken)
+	if err!= nil{
+		beego.Error(err)
 	}
 	delete(m.sessions, s.DeviceToken)
 	if s.RoomId!=""{
@@ -78,13 +89,16 @@ func Count() Monitor {
 /**
  * 遍历所有机器给用户发消息
  */
-func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
+func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error){
 	user, err := getDeviceTokenInfoByDeviceToken(deviceToken)
 	if user == nil {
 		return false, err
 	}
 	if ip, ok := user["IP"]; ok && len(ip)>1{
-		addr := ip+""
+		if ip == CurrentServer.Host {
+			m.SendMsg(deviceToken, msg)
+		}
+		addr := ip+":"+CurrentServer.Port
 		client, err := jsonrpc.Dial("tcp", addr)
 		if err != nil {
 			beego.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
@@ -100,7 +114,15 @@ func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
 	}
 	return false, errors.New("设备不在线")
 }
-
+func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
+	if s, ok :=m.sessions[deviceToken]; ok{
+		s.Send(&msg)
+		return true, nil
+	}else{
+		delDeviceTokenInfo(deviceToken)
+		return false, errors.New("设备不在线")
+	}
+}
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 	if msg.MsgType!=TYPE_BROADCAST_MSG{
 		return false, errors.New("消息类型不是广播消息")
@@ -134,10 +156,10 @@ func (m *sessionManager) BroadcastSelf(msg Msg) (bool, error) {
 	return true, nil
 }
 
-func delSeviceTokenInfo(deviceToken string) (int, error){
+func delDeviceTokenInfo(deviceToken string) (int, error){
 	return common.RedisClient.Del([]string{deviceTokenKey(deviceToken)})
 }
-func saveDeviceTokenInfo(user User) (string, error){
+func saveDeviceTokenInfo(user *User) (string, error){
 	if len(user.DeviceToken)<1{
 		return "", errors.New("DeviceToken为空")
 	}
