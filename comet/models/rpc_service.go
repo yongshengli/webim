@@ -22,9 +22,8 @@ func (rs *RpcFunc) Broadcast(args map[string]interface{}, reply *bool) error {
     return err
 }
 
-func RunRpcServer(port string) {
-    rpcFunc := new(RpcFunc)
-    rpc.Register(rpcFunc)
+func RpcServer(port string) {
+    rpc.Register(new(RpcFunc))
     tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 
     if err != nil {
