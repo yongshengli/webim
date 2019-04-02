@@ -74,7 +74,7 @@ func (j *JobWorker) leaveRoom() {
         return
     }
     if room != nil {
-        room.Leave(j.s.Id)
+        room.Leave(j.s.DeviceToken)
     }
     j.Rsp.MsgType = TYPE_COMMON_MSG
     j.Rsp.Data = map[string]interface{}{"code":0, "content":"ok"}
@@ -98,8 +98,8 @@ func (j *JobWorker) joinRoom() {
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
-        ru := RUser{SId: j.s.Id, User: *j.s.User, Addr: j.s.Addr}
-        res, err := room.Join(RUser{SId: j.s.Id, User: *j.s.User, Addr: j.s.Addr})
+        ru := RUser{SId: j.s.DeviceToken, User: *j.s.User, Addr: j.s.IP}
+        res, err := room.Join(RUser{SId: j.s.DeviceToken, User: *j.s.User, Addr: j.s.IP})
         j.s.RoomId = roomId
         if err != nil {
             beego.Error(err)
