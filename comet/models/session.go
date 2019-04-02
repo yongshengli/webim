@@ -7,7 +7,6 @@ import (
     "time"
     "io"
     "strings"
-    "comet/src/rrx/logger"
 )
 
 type User struct {
@@ -91,6 +90,10 @@ func (s *Session) Send(msg *Msg) {
     s.repChan <- msg
 }
 func (s *Session)ping(){
+    //当前session没有token信息则不保持链接
+    if len(s.DeviceToken) < 1 {
+        return
+    }
     msg := &Msg{MsgType:TYPE_PING}
     s.Send(msg)
 }
@@ -112,7 +115,7 @@ func (s *Session) write(msg *Msg) error {
         }
         // 网络已经被关闭的情况下,设置Session关闭
         if err == io.EOF || err != nil && strings.Contains(err.Error(), "use of closed network connection") {
-            logger.Info("msg[network_has_closed_than_set_session_close] sessionIp[%s] user[%v]", s.Conn.RemoteAddr(), s.User)
+            beego.Info("msg[network_has_closed_than_set_session_close] sessionIp[%s] user[%v]", s.Conn.RemoteAddr(), s.User)
             s.sendFailCount = 9999
             s.Close()
         }
@@ -123,17 +126,23 @@ func (s *Session) write(msg *Msg) error {
 }
 
 func (s *Session) do(msg *Msg) {
+    if msg.MsgType == TYPE_PONG{
+        return
+    }else if msg.MsgType==TYPE_PING{
+        s.pong()
+        return
+    }
     NewJobWork(*msg, s).Do()
 }
 func (s *Session) read() {
     for {
         if s.stopChan == nil {
-            logger.Info("msg[stop_read_client_data] user[%v]", s.User)
+            beego.Info("msg[stop_read_client_data] user[%v]", s.User)
             break
         }
         _, p, err := s.Conn.ReadMessage()
         if err != nil && err == io.EOF {
-            logger.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
+            beego.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
             s.Close()
             break
         }
@@ -146,9 +155,10 @@ func (s *Session) read() {
 }
 func (s *Session) Close() {
     defer s.Conn.Close()
-
     s.Manager.DelSession(s)
 
-    close(s.stopChan)
-    s.stopChan = nil
+    if s.stopChan!=nil {
+        close(s.stopChan)
+        s.stopChan = nil
+    }
 }

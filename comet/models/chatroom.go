@@ -10,9 +10,9 @@ import (
 )
 
 type RUser struct {
-	SId  string `json:"sid"`
-	Addr string `json:"ip"`   //sid 所在机器ip
-	User User   `json:"user"` //用户数据
+	DeviceToken string `json:"device_token"`
+	IP        string `json:"ip"`   //sid 所在机器ip
+	User        User   `json:"user"` //用户数据
 }
 type Room struct {
 	Id      string   `json:"id"`
@@ -76,17 +76,17 @@ func (r *Room) Users() (map[string]interface{}, error){
 		return nil, err
 	}
 	res := map[string]interface{}{}
-	for sid, st := range tmap {
+	for dt, st := range tmap {
 		ru := RUser{}
 		json.Unmarshal([]byte(st), &ru)
-		res[sid] = ru
+		res[dt] = ru
 	}
 	return res, nil
 }
 
 func (r *Room) Join(ru RUser) (bool, error){
 	//r.users[s.Id] = RUser{SId:s.Id, Ip:s.IP, User:*s.User}
-	user, err := common.RedisClient.Do("hget", roomUserKey(r.Id), ru.SId)
+	user, err := common.RedisClient.Do("hget", roomUserKey(r.Id), ru.DeviceToken)
 	if err!= nil {
 		return false, err
 	}
@@ -97,7 +97,7 @@ func (r *Room) Join(ru RUser) (bool, error){
 	if err!=nil{
 		return false, err
 	}
-	res, err := redis.Int(common.RedisClient.Do("hset", roomUserKey(r.Id), ru.SId, jsonStr))
+	res, err := redis.Int(common.RedisClient.Do("hset", roomUserKey(r.Id), ru.DeviceToken, jsonStr))
 	if err!=nil{
 		return false, err
 	}
@@ -107,8 +107,8 @@ func (r *Room) Join(ru RUser) (bool, error){
 	return true, nil
 }
 
-func (r *Room) Leave(sId string) (bool, error){
-	_, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), sId)
+func (r *Room) Leave(deviceToken string) (bool, error){
+	_, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), deviceToken)
 	if err!=nil{
 		return false, err
 	}
@@ -136,7 +136,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error){
 	for _, user := range users{
 		//fmt.Println(user)
 		//session.Send(msg)
-        SessionManager.SendMsg(user.(RUser).SId, *msg)
+        SessionManager.Unicast(user.(RUser).DeviceToken, *msg)
 	}
 	return true, nil
 }

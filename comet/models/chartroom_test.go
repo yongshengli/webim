@@ -22,7 +22,7 @@ func TestNewRoom(t *testing.T) {
     if room.Id =="" {
         t.Fail()
     }
-    _, err = room.Join(RUser{SId:uuid.NewV4().String(), IP:"127.0.0.1", User:User{Id:1, Name:"张三"}})
+    _, err = room.Join(RUser{DeviceToken:uuid.NewV4().String(), IP:"127.0.0.1", User:User{Id:1, Name:"张三"}})
     if err!=nil{
         t.Error(err)
     }

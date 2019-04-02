@@ -87,7 +87,7 @@ func Count() Monitor {
 	return monitor
 }
 /**
- * 遍历所有机器给用户发消息
+ * 根据deviceToken找到用户对应的主机然后推送给用户
  */
 func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error){
 	user, err := getDeviceTokenInfoByDeviceToken(deviceToken)
@@ -96,21 +96,22 @@ func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error){
 	}
 	if ip, ok := user["IP"]; ok && len(ip)>1{
 		if ip == CurrentServer.Host {
-			m.SendMsg(deviceToken, msg)
+			return m.SendMsg(deviceToken, msg)
+		} else {
+			addr := ip + ":" + CurrentServer.Port
+			client, err := jsonrpc.Dial("tcp", addr)
+			if err != nil {
+				beego.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+				return false, err
+			}
+			args := map[string]interface{}{}
+			args["device_token"] = deviceToken
+			args["msg"] = msg
+			reply := false
+			client.Call("RpcFunc.Unicast", args, &reply)
+			log.Printf("发送单播addr%s, res:%t", addr, reply)
+			return true, nil
 		}
-		addr := ip+":"+CurrentServer.Port
-		client, err := jsonrpc.Dial("tcp", addr)
-		if err != nil {
-			beego.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
-			return false, err
-		}
-		args := map[string]interface{}{}
-		args["device_token"] = deviceToken
-		args["msg"] = msg
-		reply := false
-		client.Call("RpcFunc.Unicast", args, &reply)
-		log.Printf("发送单播addr%s, res:%t", addr, reply)
-		return true, nil
 	}
 	return false, errors.New("设备不在线")
 }

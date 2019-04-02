@@ -37,10 +37,7 @@ func (j *JobWorker) Log(){
 }
 func (j *JobWorker) Do() {
     defer j.Log()
-    if j.Req.ReqId == "" {
-        beego.Error("req_id为空，不做任何处理")
-        return
-    }
+
     switch j.Req.MsgType {
     case TYPE_CREATE_ROOM:
         j.createRoom()
@@ -98,8 +95,8 @@ func (j *JobWorker) joinRoom() {
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
-        ru := RUser{SId: j.s.DeviceToken, User: *j.s.User, Addr: j.s.IP}
-        res, err := room.Join(RUser{SId: j.s.DeviceToken, User: *j.s.User, Addr: j.s.IP})
+        ru := RUser{DeviceToken: j.s.DeviceToken, User: *j.s.User, IP: j.s.IP}
+        res, err := room.Join(RUser{DeviceToken: j.s.DeviceToken, User: *j.s.User, IP: j.s.IP})
         j.s.RoomId = roomId
         if err != nil {
             beego.Error(err)

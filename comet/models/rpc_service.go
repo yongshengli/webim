@@ -37,7 +37,7 @@ func RpcServer(port string) {
     tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 
     if err != nil {
-        fmt.Println("错误了哦")
+        fmt.Println(err)
         os.Exit(1)
     }
     listener, err := net.ListenTCP("tcp", tcpAddr)
