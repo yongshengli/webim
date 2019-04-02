@@ -127,12 +127,16 @@ func (s *Session) do(msg *Msg) {
 func (s *Session) read() {
     for {
         _, p, err := s.Conn.ReadMessage()
-        if err != nil {
-            return
+        if err != nil && err == io.EOF {
+            logger.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
+            s.Close()
+            break
         }
-        msg := new(Msg)
-        json.Unmarshal(p, msg)
-        s.reqChan <- msg
+        if len(p)>0 {
+            msg := new(Msg)
+            json.Unmarshal(p, msg)
+            s.reqChan <- msg
+        }
     }
 }
 func (s *Session) Close() {
