@@ -5,7 +5,7 @@ $(document).ready(function () {
     socket = new WebSocket('ws://' + window.location.host + '/ws?uname=' + $('#uname').text());
     socket.onopen = function() {
         console.log("建立长连接");
-        var data = {"type":4,"data":{"room_id":"1"}}
+        var data = {"type":4,"data":{"room_id":"1", "device_token":"web_test"}}
         socket.send(JSON.stringify(data))
     };
     // Message received on the socket

@@ -8,17 +8,19 @@ import (
 	"log"
 	"encoding/json"
 	"net/rpc/jsonrpc"
+    "time"
+	"github.com/astaxie/beego/logs"
 )
 var SessionManager *sessionManager
 
 type sessionManager struct {
-	users    map[int]string
+	users    map[string]string
 	sessions map[string]*Session
 }
 
 func init() {
 	SessionManager = &sessionManager{
-		users:    make(map[int]string),
+		users:    make(map[string]string),
 		sessions: make(map[string]*Session),
 	}
 	beego.Debug("session manager init")
@@ -37,7 +39,7 @@ func (m *sessionManager) CheckSession(s *Session) bool{
 /**
  在本机查找session
  */
-func (m *sessionManager) GetSessionByUid(uid int) *Session {
+func (m *sessionManager) GetSessionByUid(uid string) *Session {
 	if _, ok := m.users[uid]; ok {
 		return m.sessions[m.users[uid]]
 	}
@@ -47,6 +49,7 @@ func (m *sessionManager) AddSession(s *Session) bool{
 	if len(s.DeviceToken)<1{
 		return false
 	}
+	s.User.DeviceToken = s.DeviceToken
 	//把session 信息保存到redis
 	_, err := saveDeviceTokenInfo(s.User)
 	if err!=nil{
@@ -54,7 +57,7 @@ func (m *sessionManager) AddSession(s *Session) bool{
 		return false
 	}
 	m.sessions[s.DeviceToken] = s
-	if s.User.Id>0{
+	if s.User.Id!=""{
 		m.users[s.User.Id] = s.DeviceToken
 	}
 	return true
@@ -70,13 +73,13 @@ func (m *sessionManager) DelSession(s *Session) bool{
 		beego.Error(err)
 	}
 	delete(m.sessions, s.DeviceToken)
-	if s.RoomId!=""{
+	if s.RoomId != "" {
 		room, _ := GetRoom(s.RoomId)
-		if room!=nil{
-			room.Leave(s.DeviceToken)
+		if room != nil {
+			room.Leave(s)
 		}
 	}
-	if s.User.Id>0{
+	if s.User.Id != "" {
 		delete(m.users, s.User.Id)
 		return true
 	}
@@ -104,7 +107,7 @@ func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error){
 	if user == nil {
 		return false, err
 	}
-	if ip, ok := user["IP"]; ok && len(ip)>1{
+	if ip, ok := user["ip"]; ok && len(ip)>1{
 		if ip == CurrentServer.Host {
 			return m.SendMsg(deviceToken, msg)
 		} else {
@@ -126,6 +129,7 @@ func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error){
 	return false, errors.New("设备不在线")
 }
 func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
+	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
 	if s, ok :=m.sessions[deviceToken]; ok{
 		s.Send(&msg)
 		return true, nil
@@ -169,6 +173,7 @@ func (m *sessionManager) BroadcastSelf(msg Msg) (bool, error) {
 }
 
 func delDeviceTokenInfo(deviceToken string) (int, error){
+	logs.Debug("msg[call_delDeviceTokenInfo] device_toke[%s]", deviceToken)
 	return common.RedisClient.Del([]string{deviceTokenKey(deviceToken)})
 }
 func saveDeviceTokenInfo(user *User) (string, error){
@@ -180,18 +185,24 @@ func saveDeviceTokenInfo(user *User) (string, error){
 		beego.Error(err)
 		return "", err
 	}
-	return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, 3600*24)
+	return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, 3600*24*time.Second)
 }
 func getDeviceTokenByUid(uid string) (string, error){
 	return redis.String(common.RedisClient.Get(uidKey(uid)))
 }
+
 func getDeviceTokenInfoByDeviceToken(deviceToken string) (map[string]string, error){
-	res := map[string]string{}
+	var res map[string]string
 	replay, err := common.RedisClient.Get(deviceTokenKey(deviceToken))
-	if replay==nil{
-		return res, err
+	if replay == nil {
+		return nil, err
 	}
-	return redis.StringMap(replay, err)
+	err = json.Unmarshal(replay.([]byte), &res)
+	if err != nil {
+		logs.Error("msg[解析json失败] method[getDeviceTokenInfoByDeviceToken] err[%s]", err.Error())
+		return nil, err
+	}
+	return res, nil
 }
 func deviceTokenKey(deviceToken string) string{
 	return "comet:token:" + deviceToken

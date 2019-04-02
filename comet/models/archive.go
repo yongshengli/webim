@@ -1,12 +1,11 @@
 package models
 
 import (
-    "github.com/astaxie/beego"
-    "fmt"
     "webim/comet/common"
     "github.com/satori/go.uuid"
     "time"
     "encoding/json"
+    "github.com/astaxie/beego/logs"
 )
 
 type IWorker interface {
@@ -33,7 +32,7 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
 func (j *JobWorker) Log(){
     reqJson, _ := json.Marshal(j.Req)
     rspJson, _ := json.Marshal(j.Rsp)
-    beego.Info("req:%s, rsp:%s", reqJson, rspJson)
+    logs.Info("req:%s, rsp:%s", string(reqJson), string(rspJson))
 }
 func (j *JobWorker) Do() {
     defer j.Log()
@@ -47,12 +46,14 @@ func (j *JobWorker) Do() {
         j.joinRoom()
     case TYPE_LEAVE_ROOM:
         j.leaveRoom()
+    case TYPE_REGISTER:
+        j.register()
     }
 }
 
 func (j *JobWorker) register() {
     if _, ok := j.Req.Data["device_id"]; !ok {
-
+        return
     }
     deviceToken := common.GenerateDeviceToken(j.Req.Data["device_id"].(string), j.Req.Data["appkey"].(string))
     j.Rsp.MsgType = TYPE_COMMON_MSG
@@ -61,17 +62,17 @@ func (j *JobWorker) register() {
 }
 func (j *JobWorker) leaveRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
-        fmt.Println("room_id 为空")
+        logs.Debug("msg[%s]","room_id为空")
         return
     }
     roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
-        beego.Error(err)
+        logs.Error("msg[%s]", err.Error())
         return
     }
     if room != nil {
-        room.Leave(j.s.DeviceToken)
+        room.Leave(j.s)
     }
     j.Rsp.MsgType = TYPE_COMMON_MSG
     j.Rsp.Data = map[string]interface{}{"code":0, "content":"ok"}
@@ -79,13 +80,13 @@ func (j *JobWorker) leaveRoom() {
 }
 func (j *JobWorker) joinRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
-        beego.Warn("room_id 为空")
+        logs.Debug("msg[room_id为空]")
         return
     }
     roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
-        beego.Error(err)
+        logs.Error("msg[%s]", err.Error())
         return
     }
     if room == nil {
@@ -95,16 +96,15 @@ func (j *JobWorker) joinRoom() {
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
-        ru := RUser{DeviceToken: j.s.DeviceToken, User: *j.s.User, IP: j.s.IP}
-        res, err := room.Join(RUser{DeviceToken: j.s.DeviceToken, User: *j.s.User, IP: j.s.IP})
-        j.s.RoomId = roomId
+        res, err := room.Join(j.s)
         if err != nil {
-            beego.Error(err)
+            logs.Error("msg[%s]", err.Error())
+            return
         }
         if res {
             data := make(map[string]interface{})
             data["room_id"] = room.Id
-            data["content"] = ru.User.Name + "进入房间"
+            data["content"] = j.s.User.Name + "进入房间"
             j.Rsp.MsgType = TYPE_COMMON_MSG
             j.Rsp.Data = data
             room.Broadcast(&j.Rsp)
@@ -113,13 +113,13 @@ func (j *JobWorker) joinRoom() {
 }
 func (j *JobWorker) roomMsg() {
     if _, ok := j.Req.Data["room_id"]; !ok {
-        beego.Warn("room_id 为空")
+        logs.Warn("msg[room_id为空]")
         return
     }
     roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
-        beego.Error(err)
+        logs.Error("msg[查找房间失败] err[%s]", err.Error())
         return
     }
     if room == nil {
@@ -134,21 +134,26 @@ func (j *JobWorker) roomMsg() {
 }
 func (j *JobWorker) createRoom() {
     if _, ok := j.Req.Data["room_id"]; !ok {
-        beego.Warn("room_id 为空")
+        logs.Warn("msg[room_id为空]")
         return
     }
     roomId := j.Req.Data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
-        beego.Error(err)
+        logs.Error("msg[%s]", err.Error())
         return
     }
     if room == nil {
-        NewRoom(roomId, "")
+        room, _ = NewRoom(roomId, "")
+    }
+    _, err = room.Join(j.s)
+    if err != nil {
+        logs.Error("msg[加入房间失败] err[%s]", err.Error())
+        return
     }
     data := make(map[string]interface{})
     data["content"] = "创建房间成功"
-    j.Rsp.MsgType=TYPE_COMMON_MSG
-    j.Rsp.Data= data
+    j.Rsp.MsgType = TYPE_COMMON_MSG
+    j.Rsp.Data = data
     j.s.Send(&j.Rsp)
 }

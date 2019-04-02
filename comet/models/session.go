@@ -10,14 +10,15 @@ import (
 )
 
 type User struct {
-    Id            int                    `json:"id"`
-    Name          string                 `json:"name"`
-    Platform      string                 `json:"platform"`
-    ClientVersion string                 `json:"clientVersion"`
+    Id            string `json:"id"`
+    Name          string `json:"name"`
+    Platform      string `json:"platform"`
+    ClientVersion string `json:"clientVersion"`
 
-    DeviceToken    string                 `json:"DeviceToken"` // CometToken = md5(udid+appKey)
-    Info          map[string]interface{} `json:"info"`
-    IP            string                 `json:"ip"`
+    DeviceToken string                 `json:"device_token"` // CometToken = md5(udid+appKey)
+    Info        map[string]interface{} `json:"info"`
+    IP          string                 `json:"ip"`
+    RealIP      string                 `json:"real_ip"`
 }
 
 type Session struct {
@@ -35,8 +36,10 @@ type Session struct {
 
 func NewSession(conn *websocket.Conn, m *sessionManager) *Session {
     u := &User{
-        Id:   0,
-        Name: "匿名用户",
+        Id:     "",
+        Name:   "匿名用户",
+        IP:     CurrentServer.Host,
+        RealIP: conn.RemoteAddr().String(),
     }
     return &Session{
         DeviceToken: "",
@@ -139,8 +142,15 @@ func (s *Session) do(msg *Msg) {
         return
     }
     //没有带deviceToken的链接不予许访问register以外的业务方法
-    if msg.MsgType != TYPE_REGISTER && s.checkSession() == false{
-        return
+    if msg.MsgType != TYPE_REGISTER{
+        if s.checkSession() == false {
+            if token, ok := msg.Data["device_token"]; ok{
+                s.DeviceToken = token.(string)
+                s.Manager.AddSession(s)
+            }else{
+                return
+            }
+        }
     }
     NewJobWork(*msg, s).Do()
 }
