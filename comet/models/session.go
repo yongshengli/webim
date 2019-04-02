@@ -90,15 +90,21 @@ func (s *Session) Send(msg *Msg) {
     s.repChan <- msg
 }
 func (s *Session)ping(){
-    //当前session没有token信息则不保持链接
-    if len(s.DeviceToken) < 1 {
+    //当前session没有token信息则不发送ping,断开链接
+    if s.checkSession() == false {
+        s.Close()
         return
     }
-    msg := &Msg{MsgType:TYPE_PING}
+    msg := &Msg{MsgType:TYPE_PING, Data:map[string]interface{}{"content":"ping"}}
     s.Send(msg)
 }
+//检查session是否有效
+func (s *Session) checkSession() bool{
+    return s.Manager.CheckSession(s)
+}
+
 func (s *Session) pong(){
-    msg := &Msg{MsgType:TYPE_PONG}
+    msg := &Msg{MsgType:TYPE_PONG, Data:map[string]interface{}{"content":"pong"}}
     s.Send(msg)
 }
 func (s *Session) write(msg *Msg) error {
@@ -126,10 +132,14 @@ func (s *Session) write(msg *Msg) error {
 }
 
 func (s *Session) do(msg *Msg) {
-    if msg.MsgType == TYPE_PONG{
+    if msg.MsgType == TYPE_PONG {
         return
-    }else if msg.MsgType==TYPE_PING{
+    } else if msg.MsgType == TYPE_PING {
         s.pong()
+        return
+    }
+    //没有带deviceToken的链接不予许访问业务方法
+    if msg.MsgType != TYPE_REGISTER && s.checkSession() == false{
         return
     }
     NewJobWork(*msg, s).Do()

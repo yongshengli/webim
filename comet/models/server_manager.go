@@ -3,14 +3,16 @@ package models
 import (
     "webim/comet/common"
     "github.com/gomodule/redigo/redis"
+    "encoding/json"
+    "github.com/astaxie/beego"
 )
 
 type serverManger func()
 
 type ServerInfo struct {
-    Host string
-    Port string
-    Data map[string]string
+    Host string `json:"host"`
+    Port string `json:"port"`
+    Data map[string]string `json:"data"`
 }
 var (
     ServerManager = new(serverManger)
@@ -18,13 +20,16 @@ var (
 )
 
 func (sm *serverManger) Register(port string) (int, error){
-    addr := common.GetLocalIp()+":"+port
     CurrentServer = ServerInfo{Host:common.GetLocalIp(), Port:port}
-
-    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), addr, CurrentServer))
+    b, err := json.Marshal(CurrentServer)
+    if err!=nil{
+        beego.Error(err)
+        return 0, err
+    }
+    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), CurrentServer.Host, string(b)))
 }
 
-func (sm *serverManger) List() (map[string]string, error) {
+func (sm *serverManger) List() (map[string]ServerInfo, error) {
     replay, err := common.RedisClient.Do("hgetall", serverMapKey())
     if err != nil {
         return nil, err
@@ -32,11 +37,21 @@ func (sm *serverManger) List() (map[string]string, error) {
     if replay == nil {
         return nil, nil
     }
-    return redis.StringMap(replay, err)
+    strM, err := redis.StringMap(replay, err)
+    if err!=nil{
+        beego.Error(err)
+    }
+    res := make(map[string]ServerInfo, len(strM))
+    for h, v := range strM{
+        t := ServerInfo{}
+        json.Unmarshal([]byte(v), &t)
+        res[h] = t
+    }
+    return res, nil
 }
 
 func (sm *serverManger) Remove() (int, error){
-    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{common.GetLocalIp()}))
+    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{CurrentServer.Host}))
 }
 
 func serverMapKey() string{

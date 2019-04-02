@@ -32,7 +32,7 @@ func (rf *RpcFunc) Ping(args map[string]interface{}, reply *string) error{
     return nil
 }
 
-func RpcServer(port string) {
+func RunRpcServer(port string) {
     rpc.Register(new(RpcFunc))
     tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+port)
 

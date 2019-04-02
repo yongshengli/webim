@@ -29,8 +29,11 @@ func main() {
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)
 	rpcPort := beego.AppConfig.String("rpcport")
-	go models.RpcServer(rpcPort)
+
+	//启动rpc 服务
+	go models.RunRpcServer(rpcPort)
 	models.ServerManager.Register(rpcPort)
+	defer models.ServerManager.Remove()
 
 	beego.Run()
 }

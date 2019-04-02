@@ -23,11 +23,21 @@ func init() {
 	}
 	beego.Debug("session manager init")
 }
+
+func (m *sessionManager) CheckSession(s *Session) bool{
+	if len(s.DeviceToken) < 1 {
+		return false
+	}
+	if _, ok := m.sessions[s.DeviceToken]; ok{
+		return true
+	}
+	return false
+}
+
 /**
  在本机查找session
  */
 func (m *sessionManager) GetSessionByUid(uid int) *Session {
-
 	if _, ok := m.users[uid]; ok {
 		return m.sessions[m.users[uid]]
 	}
@@ -135,7 +145,8 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	for addr := range sMap {
+	for _, st := range sMap {
+		addr := st.Host +":" + st.Port
 		client, err := jsonrpc.Dial("tcp", addr)
 		if err != nil {
 			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
