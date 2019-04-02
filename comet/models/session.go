@@ -138,7 +138,7 @@ func (s *Session) do(msg *Msg) {
         s.pong()
         return
     }
-    //没有带deviceToken的链接不予许访问业务方法
+    //没有带deviceToken的链接不予许访问register以外的业务方法
     if msg.MsgType != TYPE_REGISTER && s.checkSession() == false{
         return
     }

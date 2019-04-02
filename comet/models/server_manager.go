@@ -51,6 +51,7 @@ func (sm *serverManger) List() (map[string]ServerInfo, error) {
 }
 
 func (sm *serverManger) Remove() (int, error){
+    beego.Info("remove server " + CurrentServer.Host)
     return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{CurrentServer.Host}))
 }
 
