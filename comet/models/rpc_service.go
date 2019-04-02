@@ -17,6 +17,12 @@ func (rf *RpcFunc) Unicast(args map[string]interface{}, reply *bool) error {
 }
 
 func (rf *RpcFunc) Broadcast(args map[string]interface{}, reply *bool) error {
+    res, err := SessionManager.Broadcast(args["msg"].(Msg))
+    *reply = res
+    return err
+}
+//只广播本机
+func (rf *RpcFunc) BroadcastSelf(args map[string]interface{}, reply *bool) error{
     res, err := SessionManager.BroadcastSelf(args["msg"].(Msg))
     *reply = res
     return err

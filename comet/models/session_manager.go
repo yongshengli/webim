@@ -150,17 +150,21 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 		return false, err
 	}
 	for _, st := range sMap {
-		addr := st.Host +":" + st.Port
-		client, err := jsonrpc.Dial("tcp", addr)
-		if err != nil {
-			log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
-			continue
+		if st.Host == CurrentServer.Host {
+			return m.BroadcastSelf(msg)
+		}else {
+			addr := st.Host + ":" + st.Port
+			client, err := jsonrpc.Dial("tcp", addr)
+			if err != nil {
+				log.Printf("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+				continue
+			}
+			args := map[string]interface{}{}
+			args["msg"] = msg
+			reply := false
+			client.Call("RpcFunc.BroadcastSelf", args, &reply)
+			log.Printf("发送广播addr%s, res:%t", addr, reply)
 		}
-		args := map[string]interface{}{}
-		args["msg"] = msg
-		reply := false
-		client.Call("RpcFunc.Broadcast", args, &reply)
-		log.Printf("发送广播addr%s, res:%t", addr, reply)
 	}
 	return true, nil
 }
