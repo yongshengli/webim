@@ -74,6 +74,7 @@ func (s *Session) start() {
     for {
         select {
         case <- s.stopChan:
+            s.Close()
             return
         case req := <-s.reqChan:
             s.do(req)
@@ -126,6 +127,10 @@ func (s *Session) do(msg *Msg) {
 }
 func (s *Session) read() {
     for {
+        if s.stopChan == nil {
+            logger.Info("msg[stop_read_client_data] user[%v]", s.User)
+            break
+        }
         _, p, err := s.Conn.ReadMessage()
         if err != nil && err == io.EOF {
             logger.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
