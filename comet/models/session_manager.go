@@ -23,11 +23,12 @@ type sessionManager struct {
 
 func InitSessionManager(slotContainerLen, slotLen int) {
 	SessionManager = &sessionManager{
-		users: map[string]string{},
-		slotLen:    slotLen,
+		users:            map[string]string{},
+		slotLen:          slotLen,
 		slotContainerLen: slotContainerLen,
+		slotContainer: make([]*Slot, slotContainerLen),
 	}
-	for i:=0; i<slotContainerLen; i++{
+	for i := 0; i < slotContainerLen; i++ {
 		SessionManager.slotContainer[i] = NewSlot(slotLen)
 	}
 	beego.Debug("session manager init")
