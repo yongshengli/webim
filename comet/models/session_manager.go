@@ -10,38 +10,51 @@ import (
 	"net/rpc/jsonrpc"
     "time"
 	"github.com/astaxie/beego/logs"
+	"comet/src/rrx/farm"
 )
 var SessionManager *sessionManager
 
 type sessionManager struct {
 	users    map[string]string
-	sessions map[string]*Session
+	slotLen   int    //每个Solt 的长度
+	slotContainerLen int  //session 容器长度
+	slotContainer []*Slot  //session 容器
 }
 
-func init() {
+func InitSessionManager(slotContainerLen, slotLen int) {
 	SessionManager = &sessionManager{
-		users:    make(map[string]string),
-		sessions: make(map[string]*Session),
+		users: map[string]string{},
+		slotLen:    slotLen,
+		slotContainerLen: slotContainerLen,
+	}
+	for i:=0; i<slotContainerLen; i++{
+		SessionManager.slotContainer[i] = NewSlot(slotLen)
 	}
 	beego.Debug("session manager init")
 }
 
-func (m *sessionManager) CheckSession(s *Session) bool{
+func (m *sessionManager) getSlotPos(deviceToken string) int{
+	h := farm.Hash32([]byte(deviceToken))
+	return int(h) % m.slotContainerLen
+}
+
+func (m *sessionManager) getSlot(deviceToken string) *Slot{
+	return m.slotContainer[m.getSlotPos(deviceToken)]
+}
+
+func (m *sessionManager) CheckSession(s *Session) bool {
 	if len(s.DeviceToken) < 1 {
 		return false
 	}
-	if _, ok := m.sessions[s.DeviceToken]; ok{
-		return true
-	}
-	return false
+	return m.getSlot(s.DeviceToken).Has(s.DeviceToken)
 }
 
 /**
  在本机查找session
  */
 func (m *sessionManager) GetSessionByUid(uid string) *Session {
-	if _, ok := m.users[uid]; ok {
-		return m.sessions[m.users[uid]]
+	if deviceToken, ok := m.users[uid]; ok {
+		return m.getSlot(deviceToken).Get(m.users[uid])
 	}
 	return nil
 }
@@ -56,7 +69,7 @@ func (m *sessionManager) AddSession(s *Session) bool{
 		beego.Error(err)
 		return false
 	}
-	m.sessions[s.DeviceToken] = s
+	m.getSlot(s.DeviceToken).Add(s.DeviceToken, s)
 	if s.User.Id!=""{
 		m.users[s.User.Id] = s.DeviceToken
 	}
@@ -72,7 +85,7 @@ func (m *sessionManager) DelSession(s *Session) bool{
 	if err!= nil{
 		beego.Error(err)
 	}
-	delete(m.sessions, s.DeviceToken)
+	m.getSlot(s.DeviceToken).Del(s.DeviceToken)
 	if s.RoomId != "" {
 		room, _ := GetRoom(s.RoomId)
 		if room != nil {
@@ -95,7 +108,7 @@ type Monitor struct {
 func Count() Monitor {
 	monitor := Monitor{
 		UserNum:    len(SessionManager.users),
-		SessionNum: len(SessionManager.sessions),
+		SessionNum: 0,
 	}
 	return monitor
 }
@@ -130,8 +143,9 @@ func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error){
 }
 func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
 	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
-	if s, ok :=m.sessions[deviceToken]; ok{
-		s.Send(&msg)
+	slot := m.getSlot(deviceToken)
+	if slot.Has(deviceToken){
+		slot.Get(deviceToken).Send(&msg)
 		return true, nil
 	}else{
 		delDeviceTokenInfo(deviceToken)
@@ -139,9 +153,6 @@ func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
 	}
 }
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
-	for _, session := range m.sessions {
-		session.Send(&msg)
-	}
 	sMap, err := ServerManager.List()
 	if err != nil {
 		return false, err
@@ -167,9 +178,13 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 }
 
 func (m *sessionManager) BroadcastSelf(msg Msg) (bool, error) {
-	for _, session := range m.sessions {
-		session.Send(&msg)
+	for _, solt := range m.slotContainer{
+		sessionsMap := solt.All()
+		for _, session := range sessionsMap {
+			session.Send(&msg)
+		}
 	}
+
 	return true, nil
 }
 
