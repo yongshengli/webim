@@ -32,18 +32,6 @@ func (slot *Slot) Len() int {
 }
 
 /**
- * 槽里的Session个数
- */
-func (slot *Slot) Num(uuid string) int {
-	slot.lock.RLock()
-	defer slot.lock.RUnlock()
-	if _, ok := slot.dict[uuid]; ok {
-		return 1
-	}
-	return 0
-}
-
-/**
  * 是否包含某个uuid
  */
 func (slot *Slot) Has(uuid string) bool {
