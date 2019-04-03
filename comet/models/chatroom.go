@@ -142,6 +142,7 @@ func (r *Room) Leave(s *Session) (bool, error){
 //房间内广播
 func (r *Room) Broadcast(msg *Msg) (bool, error){
 	msg.Data["room_id"] = r.Id
+	msg.MsgType = TYPE_ROOM_MSG
 	beego.Debug("msg[room broadcast]")
 	users, err := r.Users()
 	if err!=nil{

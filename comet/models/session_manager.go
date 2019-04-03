@@ -139,9 +139,6 @@ func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error){
 	}
 }
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
-	if msg.MsgType!=TYPE_BROADCAST_MSG{
-		return false, errors.New("消息类型不是广播消息")
-	}
 	for _, session := range m.sessions {
 		session.Send(&msg)
 	}

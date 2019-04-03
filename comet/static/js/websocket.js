@@ -5,7 +5,7 @@ $(document).ready(function () {
     socket = new WebSocket('ws://' + window.location.host + '/ws?uname=' + $('#uname').text());
     socket.onopen = function() {
         console.log("建立长连接");
-        var data = {"type":4,"data":{"room_id":"1", "device_token":"web_test"}}
+        var data = {"type": 11, "data": {"device_id": $('#uname').text()}}
         socket.send(JSON.stringify(data))
     };
     // Message received on the socket
@@ -16,7 +16,20 @@ $(document).ready(function () {
         console.log(data);
 
         switch (data['type']) {
+            case 0:
+                alert("单播推送:"+data.data['content']);
+                break;
+            case 10:
+                var nHtml = "<li>通知:"+data.data['content']+"</li>"
+                $('#noticebox').append(nHtml);
+                break;
+            case 11:
+                alert("device_token:" + data['data']['device_token'])
+                var data = {"type":4,"data":{"room_id":"1"}}
+                socket.send(JSON.stringify(data))
+                break;
             case 2: // JOIN
+                alert("加入房间")
                 if (data.User == $('#uname').text()) {
                     li.innerText = 'You joined the chat room.';
                 } else {
@@ -24,6 +37,7 @@ $(document).ready(function () {
                 }
                 break;
             case 3: // LEAVE
+                alert("退出聊天室")
                 li.innerText = data.User + ' left the chat room.';
                 break;
             case 1: // MESSAGE
@@ -32,13 +46,13 @@ $(document).ready(function () {
                 if (data['sid']) {
                     sid = data['sid']
                 }
-                username.innerText = data.data['user'] || "匿名用户";
+                username.innerText = data.data['uname'] || "匿名用户";
                 content.innerText = data.data['content'];
 
                 li.appendChild(username);
                 li.appendChild(document.createTextNode(': '));
                 li.appendChild(content);
-
+                $('#chatbox li').first().before(li);
                 break;
             case 99:
                 var data = {
@@ -51,8 +65,6 @@ $(document).ready(function () {
                 }
                 socket.send(JSON.stringify(data));
         }
-
-        $('#chatbox li').first().before(li);
     };
 
     // Send messages.

@@ -15,9 +15,14 @@
 </div>
 
 <div class="container">
-    <h3>{{i18n .Lang "chat_history"}}:</h3>
+    <h5>{{i18n .Lang "chat_history"}}:</h5>
     <ul id="chatbox">
         <li>{{i18n .Lang "welcome"}}</li>
+    </ul>
+</div>
+<div class="container" style="color: red">
+    <h4>通知消息:</h4>
+    <ul id="noticebox">
     </ul>
 </div>
 {{end}}

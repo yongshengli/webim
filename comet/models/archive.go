@@ -6,6 +6,7 @@ import (
     "time"
     "encoding/json"
     "github.com/astaxie/beego/logs"
+    "github.com/astaxie/beego"
 )
 
 type IWorker interface {
@@ -55,8 +56,17 @@ func (j *JobWorker) register() {
     if _, ok := j.Req.Data["device_id"]; !ok {
         return
     }
-    deviceToken := common.GenerateDeviceToken(j.Req.Data["device_id"].(string), j.Req.Data["appkey"].(string))
-    j.Rsp.MsgType = TYPE_COMMON_MSG
+    appKey := beego.AppConfig.String("appkey")
+    deviceId := j.Req.Data["device_id"].(string)
+    deviceToken := common.GenerateDeviceToken(deviceId, appKey)
+    j.s.DeviceToken = deviceToken
+    j.s.User.DeviceId = deviceId
+    if j.s.User.Name == "" {
+        j.s.User.Name = deviceId
+    }
+    //保存token session信息到redis中
+    j.s.Manager.AddSession(j.s)
+    j.Rsp.MsgType = TYPE_REGISTER
     j.Rsp.Data = map[string]interface{}{"code": 0, "device_token": deviceToken}
     j.s.Send(&j.Rsp)
 }
@@ -74,7 +84,7 @@ func (j *JobWorker) leaveRoom() {
     if room != nil {
         room.Leave(j.s)
     }
-    j.Rsp.MsgType = TYPE_COMMON_MSG
+    j.Rsp.MsgType = TYPE_ROOM_MSG
     j.Rsp.Data = map[string]interface{}{"code":0, "content":"ok"}
     j.s.Send(&j.Rsp)
 }
@@ -92,7 +102,8 @@ func (j *JobWorker) joinRoom() {
     if room == nil {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
-        j.Rsp.MsgType = TYPE_COMMON_MSG
+        data["room_id"] = roomId
+        j.Rsp.MsgType = TYPE_ROOM_MSG
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
@@ -103,9 +114,7 @@ func (j *JobWorker) joinRoom() {
         }
         if res {
             data := make(map[string]interface{})
-            data["room_id"] = room.Id
             data["content"] = j.s.User.Name + "进入房间"
-            j.Rsp.MsgType = TYPE_COMMON_MSG
             j.Rsp.Data = data
             room.Broadcast(&j.Rsp)
         }
@@ -125,7 +134,8 @@ func (j *JobWorker) roomMsg() {
     if room == nil {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
-        j.Rsp.MsgType = TYPE_COMMON_MSG
+        data["room_id"] = roomId
+        j.Rsp.MsgType = TYPE_ROOM_MSG
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
@@ -153,7 +163,7 @@ func (j *JobWorker) createRoom() {
     }
     data := make(map[string]interface{})
     data["content"] = "创建房间成功"
-    j.Rsp.MsgType = TYPE_COMMON_MSG
+    j.Rsp.MsgType = TYPE_CREATE_ROOM
     j.Rsp.Data = data
     j.s.Send(&j.Rsp)
 }

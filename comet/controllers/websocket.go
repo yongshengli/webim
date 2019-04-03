@@ -25,8 +25,3 @@ func (c *WebSocketController) Get() {
 	}
 	models.NewSession(conn, models.SessionManager).Run()
 }
-func (c *WebIMController) SendMsg(){
-	deviceToken := c.GetString("device_token")
-	msg := models.Msg{MsgType:models.TYPE_COMMON_MSG, Data:map[string]interface{}{"content":"qwqwq"}}
-	models.SessionManager.SendMsg(deviceToken, msg)
-}
