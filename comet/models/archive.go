@@ -38,7 +38,7 @@ func (j *JobWorker) Log(){
 func (j *JobWorker) Do() {
     defer j.Log()
 
-    switch j.Req.MsgType {
+    switch j.Req.Type {
     case TYPE_CREATE_ROOM:
         j.createRoom()
     case TYPE_ROOM_MSG:
@@ -66,7 +66,7 @@ func (j *JobWorker) register() {
     }
     //保存token session信息到redis中
     j.s.Manager.AddSession(j.s)
-    j.Rsp.MsgType = TYPE_REGISTER
+    j.Rsp.Type = TYPE_REGISTER
     j.Rsp.Data = map[string]interface{}{"code": 0, "device_token": deviceToken}
     j.s.Send(&j.Rsp)
 }
@@ -84,7 +84,7 @@ func (j *JobWorker) leaveRoom() {
     if room != nil {
         room.Leave(j.s)
     }
-    j.Rsp.MsgType = TYPE_ROOM_MSG
+    j.Rsp.Type = TYPE_ROOM_MSG
     j.Rsp.Data = map[string]interface{}{"code":0, "content":"ok"}
     j.s.Send(&j.Rsp)
 }
@@ -103,7 +103,7 @@ func (j *JobWorker) joinRoom() {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
         data["room_id"] = roomId
-        j.Rsp.MsgType = TYPE_ROOM_MSG
+        j.Rsp.Type = TYPE_ROOM_MSG
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
@@ -135,7 +135,7 @@ func (j *JobWorker) roomMsg() {
         data := make(map[string]interface{})
         data["content"] = "房间不存在"
         data["room_id"] = roomId
-        j.Rsp.MsgType = TYPE_ROOM_MSG
+        j.Rsp.Type = TYPE_ROOM_MSG
         j.Rsp.Data = data
         j.s.Send(&j.Rsp)
     } else {
@@ -163,7 +163,7 @@ func (j *JobWorker) createRoom() {
     }
     data := make(map[string]interface{})
     data["content"] = "创建房间成功"
-    j.Rsp.MsgType = TYPE_CREATE_ROOM
+    j.Rsp.Type = TYPE_CREATE_ROOM
     j.Rsp.Data = data
     j.s.Send(&j.Rsp)
 }

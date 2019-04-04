@@ -32,16 +32,18 @@ type BaseController struct {
 func (c *BaseController) Prepare() {
 	// Reset language option.
 	var params = make(map[string]interface{})
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &params); err != nil {
-		c.error("请求body必须是json格式"+err.Error())
-	}
+    if strings.Contains(c.Ctx.Input.Header("Content-Type"), "application/json") {
+        if err := json.Unmarshal(c.Ctx.Input.RequestBody, &params); err != nil {
+            c.error("请求body必须是json格式" + err.Error())
+        }
+    }
 	c.Data["params"] = params
 }
 
 type Response struct {
-	Code int
-	Msg string
-	Data map[string]interface{}
+	Code int                    `json:"code"`
+	Msg  string                 `json:"msg"`
+	Data map[string]interface{} `json:"data"`
 }
 
 func (c *BaseController) success(data map[string]interface{}) {

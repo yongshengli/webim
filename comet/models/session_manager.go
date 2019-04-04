@@ -5,7 +5,6 @@ import (
     "webim/comet/common"
     "github.com/gomodule/redigo/redis"
     "errors"
-    "log"
     "encoding/json"
     "net/rpc/jsonrpc"
     "time"
@@ -132,7 +131,7 @@ func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error) {
             addr := ip + ":" + CurrentServer.Port
             client, err := jsonrpc.Dial("tcp", addr)
             if err != nil {
-                beego.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+                logs.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
                 return false, err
             }
             args := map[string]interface{}{}
@@ -140,7 +139,7 @@ func (m *sessionManager) Unicast(deviceToken string, msg Msg) (bool, error) {
             args["msg"] = msg
             reply := false
             client.Call("RpcFunc.Unicast", args, &reply)
-            log.Printf("发送单播addr%s, res:%t", addr, reply)
+            logs.Debug("发送单播addr%s, res:%t", addr, reply)
             return true, nil
         }
     }
@@ -158,13 +157,14 @@ func (m *sessionManager) SendMsg(deviceToken string, msg Msg) (bool, error) {
     }
 }
 func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
+    logs.Debug("msg[call_Broadcast]")
     sMap, err := ServerManager.List()
     if err != nil {
         return false, err
     }
     for _, st := range sMap {
         if st.Host == CurrentServer.Host {
-            return m.BroadcastSelf(msg)
+            m.BroadcastSelf(msg)
         } else {
             addr := st.Host + ":" + st.Port
             client, err := jsonrpc.Dial("tcp", addr)
@@ -183,6 +183,7 @@ func (m *sessionManager) Broadcast(msg Msg) (bool, error) {
 }
 
 func (m *sessionManager) BroadcastSelf(msg Msg) (bool, error) {
+    logs.Debug("msg[call_BroadcastSelf]")
     for _, slot := range m.slotContainer {
         sessionsMap := slot.All()
         for _, session := range sessionsMap {

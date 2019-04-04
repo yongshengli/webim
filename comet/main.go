@@ -21,6 +21,7 @@ func main() {
 	// WebSocket.
 	beego.Router("/ws", &controllers.WebSocketController{})
 	beego.Router("/push/unicast", &controllers.PushController{}, "post:Unicast")
+	beego.Router("/push/broadcast", &controllers.PushController{}, "post:Broadcast")
 
 	common.RedisInit(map[string]string{
 		"host": beego.AppConfig.String("redis.host"),

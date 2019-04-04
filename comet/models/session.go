@@ -98,7 +98,7 @@ func (s *Session)ping(){
         s.Close()
         return
     }
-    msg := &Msg{MsgType:TYPE_PING, Data:map[string]interface{}{"content":"ping"}}
+    msg := &Msg{Type:TYPE_PING, Data:map[string]interface{}{"content":"ping"}}
     s.Send(msg)
 }
 //检查session是否有效
@@ -107,7 +107,7 @@ func (s *Session) checkSession() bool{
 }
 
 func (s *Session) pong(){
-    msg := &Msg{MsgType:TYPE_PONG, Data:map[string]interface{}{"content":"pong"}}
+    msg := &Msg{Type:TYPE_PONG, Data:map[string]interface{}{"content":"pong"}}
     s.Send(msg)
 }
 func (s *Session) write(msg *Msg) error {
@@ -135,14 +135,14 @@ func (s *Session) write(msg *Msg) error {
 }
 
 func (s *Session) do(msg *Msg) {
-    if msg.MsgType == TYPE_PONG {
+    if msg.Type == TYPE_PONG {
         return
-    } else if msg.MsgType == TYPE_PING {
+    } else if msg.Type == TYPE_PING {
         s.pong()
         return
     }
     //没有带deviceToken的链接不予许访问register以外的业务方法
-    if msg.MsgType != TYPE_REGISTER{
+    if msg.Type != TYPE_REGISTER{
         if s.checkSession() == false {
             if token, ok := msg.Data["device_token"]; ok{
                 s.DeviceToken = token.(string)

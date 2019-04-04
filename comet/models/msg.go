@@ -1,5 +1,9 @@
 package models
 
+import (
+	"reflect"
+)
+
 const (
 	TYPE_COMMON_MSG    = 0 //单个用户消息
 	TYPE_ROOM_MSG      = 1 //聊天室消息 到聊天室所有的人
@@ -14,7 +18,6 @@ const (
 	TYPE_PING          = 99 //PING
 	TYPE_PONG		   = 100 //PONG
 )
-type MsgType int
 
 type Job struct {
 	TraceID string // 日志ID
@@ -30,9 +33,26 @@ type Job struct {
 }
 
 type Msg struct {
-	MsgType MsgType                `json:"type"`
+	Type    int                    `json:"type" valid:"Required"`
 	Version string                 `json:"version"`
 	ReqId   string                 `json:"req_id"`
 	Encode  string                 `json:"encode"`
 	Data    map[string]interface{} `json:"data"`
+}
+
+func Map2Msg(m map[string]interface{}) Msg{
+	msg := &Msg{}
+
+	elem := reflect.ValueOf(msg).Elem()
+	relType := elem.Type()
+	for i := 0; i < elem.NumField(); i++ {
+		tag := relType.Field(i).Tag
+		mK := tag.Get("json")
+		if _, ok := m[mK]; ok {
+			if elem.Field(i).Type() == reflect.ValueOf(m[mK]).Type() {
+				elem.Field(i).Set(reflect.ValueOf(m[mK]))
+			}
+		}
+	}
+	return *msg
 }
