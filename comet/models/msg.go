@@ -34,7 +34,6 @@ type Job struct {
 	Rsp Msg // 响应信息
 }
 
-//msg 的 组成元素只能是 int string map[sting]interface{}
 type Msg struct {
 	Type    float64                `json:"type" valid:"Required"`
 	Version string                 `json:"version"`
