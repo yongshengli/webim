@@ -37,7 +37,6 @@ func (c *PushController) Broadcast() {
         return
     }
     msg := models.Map2Msg(params["msg"].(map[string]interface{}))
-
     _, err := models.SessionManager.Broadcast(msg)
     if err != nil {
         c.error(err.Error())

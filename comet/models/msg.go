@@ -40,17 +40,16 @@ type Msg struct {
 	Data    map[string]interface{} `json:"data"`
 }
 
-func Map2Msg(m map[string]interface{}) Msg{
+func Map2Msg(data map[string]interface{}) Msg{
 	msg := &Msg{}
-
 	elem := reflect.ValueOf(msg).Elem()
 	relType := elem.Type()
 	for i := 0; i < elem.NumField(); i++ {
 		tag := relType.Field(i).Tag
-		mK := tag.Get("json")
-		if _, ok := m[mK]; ok {
-			if elem.Field(i).Type() == reflect.ValueOf(m[mK]).Type() {
-				elem.Field(i).Set(reflect.ValueOf(m[mK]))
+		mk := tag.Get("json")
+		if _, ok := data[mk]; ok {
+			if elem.Field(i).Kind() == reflect.ValueOf(data[mk]).Kind() {
+				elem.Field(i).Set(reflect.ValueOf(data[mk]))
 			}
 		}
 	}
