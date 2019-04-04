@@ -20,9 +20,12 @@ func (c *PushController) Unicast() {
         return
     }
     deviceToken := params["device_token"].(string)
-    msg := models.Map2Msg(params["msg"].(map[string]interface{}))
-
-    _, err := models.SessionManager.Unicast(deviceToken, msg)
+    msg, err := models.Map2Msg(params["msg"].(map[string]interface{}))
+    if err!=nil{
+        c.error(err.Error())
+        return
+    }
+    _, err = models.SessionManager.Unicast(deviceToken, msg)
     if err != nil {
         c.error(err.Error())
         return
@@ -36,8 +39,12 @@ func (c *PushController) Broadcast() {
         c.error("msg为空或者msg格式错误")
         return
     }
-    msg := models.Map2Msg(params["msg"].(map[string]interface{}))
-    _, err := models.SessionManager.Broadcast(msg)
+    msg, err := models.Map2Msg(params["msg"].(map[string]interface{}))
+    if err!=nil{
+        c.error(err.Error())
+        return
+    }
+    _, err = models.SessionManager.Broadcast(msg)
     if err != nil {
         c.error(err.Error())
         return

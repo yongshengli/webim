@@ -2,21 +2,23 @@ package models
 
 import (
 	"reflect"
+	"errors"
+	"fmt"
 )
 
 const (
-	TYPE_COMMON_MSG    = 0 //单个用户消息
-	TYPE_ROOM_MSG      = 1 //聊天室消息 到聊天室所有的人
-	TYPE_JOIN_ROOM     = 2 //进入房间
-	TYPE_LEAVE_ROOM    = 3 //退出房间
-	TYPE_CREATE_ROOM   = 4 //创建房间
-	TYPE_LOGIN         = 5  //登录
-	TYPE_LOGOUT        = 6  //退出
-	TYPE_NOTICE_MSG    = 10 //通知类消息
-	TYPE_REGISTER      = 11 //注册设备生成deviceToken
-	TYPE_TRANSPOND     = 12 //将消息转发到其他系统微服务，并将其他系统获取的结果返回给客户端
-	TYPE_PING          = 99 //PING
-	TYPE_PONG		   = 100 //PONG
+	TYPE_COMMON_MSG    = float64(0) //单个用户消息
+	TYPE_ROOM_MSG      = float64(1) //聊天室消息 到聊天室所有的人
+	TYPE_JOIN_ROOM     = float64(2) //进入房间
+	TYPE_LEAVE_ROOM    = float64(3) //退出房间
+	TYPE_CREATE_ROOM   = float64(4) //创建房间
+	TYPE_LOGIN         = float64(5)  //登录
+	TYPE_LOGOUT        = float64(6)  //退出
+	TYPE_NOTICE_MSG    = float64(10) //通知类消息
+	TYPE_REGISTER      = float64(11) //注册设备生成deviceToken
+	TYPE_TRANSPOND     = float64(12) //将消息转发到其他系统微服务，并将其他系统获取的结果返回给客户端
+	TYPE_PING          = float64(99) //PING
+	TYPE_PONG		   = float64(100) //PONG
 )
 
 type Job struct {
@@ -32,26 +34,28 @@ type Job struct {
 	Rsp Msg // 响应信息
 }
 
+//msg 的 组成元素只能是 int string map[sting]interface{}
 type Msg struct {
-	Type    int                    `json:"type" valid:"Required"`
+	Type    float64                `json:"type" valid:"Required"`
 	Version string                 `json:"version"`
 	ReqId   string                 `json:"req_id"`
 	Encode  string                 `json:"encode"`
 	Data    map[string]interface{} `json:"data"`
 }
 
-func Map2Msg(data map[string]interface{}) Msg{
+func Map2Msg(data map[string]interface{}) (Msg, error){
 	msg := &Msg{}
 	elem := reflect.ValueOf(msg).Elem()
 	relType := elem.Type()
 	for i := 0; i < elem.NumField(); i++ {
 		tag := relType.Field(i).Tag
 		mk := tag.Get("json")
-		if _, ok := data[mk]; ok {
-			if elem.Field(i).Kind() == reflect.ValueOf(data[mk]).Kind() {
-				elem.Field(i).Set(reflect.ValueOf(data[mk]))
+		if mv, ok := data[mk]; ok {
+			if elem.Field(i).Kind() != reflect.ValueOf(mv).Kind() {
+				return *msg, errors.New(fmt.Sprintf("Map2Msg error: map[%s]type error", mk))
 			}
+			elem.Field(i).Set(reflect.ValueOf(mv))
 		}
 	}
-	return *msg
+	return *msg, nil
 }
