@@ -23,11 +23,13 @@
 #   non-go = false
 #   go-tests = true
 #   unused-packages = true
-
+ignored = [
+    "golang.org/x/crypto/acme/autocert"
+]
 
 [[constraint]]
   name = "github.com/astaxie/beego"
-  version = "1.9.2"
+  version = "1.11.1"
 
 [[constraint]]
   branch = "master"
