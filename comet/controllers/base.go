@@ -4,6 +4,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 	"strings"
+	"encoding/json"
 )
 
 func init() {
@@ -30,24 +31,11 @@ type BaseController struct {
 // It's used for language option check and setting.
 func (c *BaseController) Prepare() {
 	// Reset language option.
-	c.Lang = "" // This field is from i18n.Locale.
-
-	// 1. Get language information from 'Accept-Language'.
-	al := c.Ctx.Request.Header.Get("Accept-Language")
-	if len(al) > 4 {
-		al = al[:5] // Only compare first 5 letters.
-		if i18n.IsExist(al) {
-			c.Lang = al
-		}
+	var params = make(map[string]interface{})
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &params); err != nil {
+		c.error("请求body必须是json格式"+err.Error())
 	}
-
-	// 2. Default language is English.
-	if len(c.Lang) == 0 {
-		c.Lang = "en-US"
-	}
-
-	// Set template level language option.
-	c.Data["Lang"] = c.Lang
+	c.Data["params"] = params
 }
 
 type Response struct {
