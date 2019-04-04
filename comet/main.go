@@ -13,13 +13,13 @@ func main() {
 
 	// Register routers.
 	beego.Router("/", &controllers.WebIMController{}, "get:Welcome")
-	beego.Router("/webim", &controllers.WebIMController{})
+	beego.Router("/webim", &controllers.WebIMController{}, "get:Get")
 
 	beego.Router("/room/create", &controllers.RoomController{}, "post:Create")
 	beego.Router("/room/delete", &controllers.RoomController{}, "post:Delete")
 
 	// WebSocket.
-	beego.Router("/ws", &controllers.WebSocketController{})
+	beego.Router("/ws", &controllers.WebSocketController{}, "get:Get")
 	beego.Router("/push/unicast", &controllers.PushController{}, "post:Unicast")
 	beego.Router("/push/broadcast", &controllers.PushController{}, "post:Broadcast")
 
