@@ -3,11 +3,11 @@ package server
 import (
     "github.com/astaxie/beego"
     "github.com/gorilla/websocket"
-    "encoding/json"
     "time"
     "io"
     "strings"
     "webim/comet/common"
+    "encoding/json"
 )
 
 type User struct {
@@ -117,7 +117,8 @@ func (s *Session) pong(){
     s.Send(msg)
 }
 func (s *Session) write(msg *Msg) error {
-    data, err := json.Marshal(msg)
+
+    data, err := common.EnJson(msg)
     if err != nil {
         beego.Error("Fail to marshal event:", err)
         return err

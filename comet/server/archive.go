@@ -4,7 +4,6 @@ import (
     "webim/comet/common"
     "github.com/satori/go.uuid"
     "time"
-    "encoding/json"
     "github.com/astaxie/beego/logs"
     "github.com/astaxie/beego"
 )
@@ -32,8 +31,8 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
  * 记录日志
  */
 func (j *JobWorker) Log(){
-    reqJson, _ := json.Marshal(j.Req)
-    rspJson, _ := json.Marshal(j.Rsp)
+    reqJson, _ := common.EnJson(j.Req)
+    rspJson, _ := common.EnJson(j.Rsp)
     logs.Info("req:%s, rsp:%s", string(reqJson), string(rspJson))
 }
 func (j *JobWorker) Do() {
@@ -75,7 +74,7 @@ func (j *JobWorker) register() {
     j.Rsp.Type = TYPE_REGISTER
     j.Rsp.DeviceToken = deviceToken
     resData := map[string]interface{}{"code": 0, "device_token": deviceToken}
-    resByte, err := json.Marshal(resData)
+    resByte, err := common.EnJson(resData)
     if err != nil {
         logs.Error("msg[register encode err] err[%s]", err.Error())
         return
@@ -104,7 +103,7 @@ func (j *JobWorker) leaveRoom() {
     }
     j.Rsp.Type = TYPE_ROOM_MSG
     resData := map[string]interface{}{"code":0, "content":"ok"}
-    resByte, err := json.Marshal(resData)
+    resByte, err := common.EnJson(resData)
     if err != nil {
         logs.Error("msg[leaveRoom encode err] err[%s]", err.Error())
         return
@@ -134,7 +133,7 @@ func (j *JobWorker) joinRoom() {
         resData["content"] = "房间不存在"
         resData["room_id"] = roomId
 
-        resByte, err := json.Marshal(resData)
+        resByte, err := common.EnJson(resData)
         if err != nil {
             logs.Error("msg[joinRoom encode err] err[%s]", err.Error())
             return
@@ -152,7 +151,7 @@ func (j *JobWorker) joinRoom() {
             resData := make(map[string]interface{})
             resData["code"] = 1
             resData["content"] = j.s.User.Name + "进入房间"
-            resByte, err := json.Marshal(resData)
+            resByte, err := common.EnJson(resData)
             if err != nil {
                 logs.Error("msg[joinRoom encode err] err[%s]", err.Error())
                 return
@@ -184,7 +183,7 @@ func (j *JobWorker) roomMsg() {
         resData["room_id"] = roomId
 
         j.Rsp.Type = TYPE_ROOM_MSG
-        resByte, err := json.Marshal(resData)
+        resByte, err := common.EnJson(resData)
         if err != nil {
             logs.Error("msg[roomMsg encode err] err[%s]", err.Error())
             return
@@ -223,7 +222,7 @@ func (j *JobWorker) createRoom() {
     resData["code"] = 0
     resData["content"] = "创建房间成功"
     j.Rsp.Type = TYPE_CREATE_ROOM
-    resByte, err := json.Marshal(resData)
+    resByte, err := common.EnJson(resData)
     if err != nil {
         logs.Error("msg[roomMsg encode err] err[%s]", err.Error())
         return
@@ -234,7 +233,7 @@ func (j *JobWorker) createRoom() {
 
 func (j *JobWorker) decode(jsonStr string) (map[string]interface{}, error) {
     data := map[string]interface{}{}
-    err := json.Unmarshal([]byte(jsonStr), &data)
+    err := common.DeJson([]byte(jsonStr), &data)
     if err!=nil{
         return nil, err
     }

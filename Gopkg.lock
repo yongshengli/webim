@@ -45,6 +45,16 @@
   version = "v1.4.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/pquerna/ffjson"
+  packages = [
+    "ffjson",
+    "fflib/v1",
+    "fflib/v1/internal"
+  ]
+  revision = "e517b90714f7c0eabe6d2e570a5886ae077d6db6"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -59,6 +69,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b29b069aec8e886eb624c41ef9ec5110f42fe2168e39e7240efe149618a85ae0"
+  inputs-digest = "2c4d94704af3b35f10311e0ca89975e392b9bf88427f822a1becdd446826401c"
   solver-name = "gps-cdcl"
   solver-version = 1
