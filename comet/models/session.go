@@ -7,6 +7,7 @@ import (
     "time"
     "io"
     "strings"
+    "webim/comet/common"
 )
 
 type User struct {
@@ -35,6 +36,9 @@ type Session struct {
 }
 
 func NewSession(conn *websocket.Conn, m *sessionManager) *Session {
+    if CurrentServer.Host == ""{
+        CurrentServer.Host = common.GetLocalIp()
+    }
     u := &User{
         Id:     "",
         Name:   "匿名用户",
