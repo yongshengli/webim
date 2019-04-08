@@ -1,7 +1,7 @@
 package controllers
 
 import (
-    "webim/comet/models"
+    "webim/comet/server"
 )
 
 type PushController struct {
@@ -20,12 +20,12 @@ func (c *PushController) Unicast() {
         return
     }
     deviceToken := params["device_token"].(string)
-    msg, err := models.Map2Msg(params["msg"].(map[string]interface{}))
+    msg, err := server.Map2Msg(params["msg"].(map[string]interface{}))
     if err!=nil{
         c.error(err.Error())
         return
     }
-    _, err = models.SessionManager.Unicast(deviceToken, msg)
+    _, err = server.Server.Unicast(deviceToken, msg)
     if err != nil {
         c.error(err.Error())
         return
@@ -39,12 +39,12 @@ func (c *PushController) Broadcast() {
         c.error("msg为空或者msg格式错误")
         return
     }
-    msg, err := models.Map2Msg(params["msg"].(map[string]interface{}))
+    msg, err := server.Map2Msg(params["msg"].(map[string]interface{}))
     if err!=nil{
         c.error(err.Error())
         return
     }
-    _, err = models.SessionManager.Broadcast(msg)
+    _, err = server.Server.Broadcast(msg)
     if err != nil {
         c.error(err.Error())
         return

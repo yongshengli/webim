@@ -5,7 +5,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
-	"webim/comet/models"
+	"webim/comet/server"
 )
 // WebSocketController handles WebSocket requests.
 type WebSocketController struct {
@@ -23,5 +23,5 @@ func (c *WebSocketController) Get() {
 		beego.Error("Cannot setup WebSocket connection:", err)
 		return
 	}
-	models.NewSession(conn, models.SessionManager).Run()
+	server.NewSession(conn, server.Server).Run()
 }

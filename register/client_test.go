@@ -35,7 +35,7 @@ func TestList(t *testing.T){
 		t.Fatal(err)
 	}
 	var res []string
-	err2 := client.Call("Manager.List", "", &res)
+	err2 := client.Call("Server.List", "", &res)
 
 	if err2!=nil {
 		t.Fatal(err)

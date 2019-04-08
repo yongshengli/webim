@@ -1,6 +1,6 @@
 package controllers
 
-import "webim/comet/models"
+import "webim/comet/server"
 
 type RoomController struct {
 	BaseController
@@ -8,12 +8,12 @@ type RoomController struct {
 
 func (c *RoomController) Create() {
 	roomId := c.GetString("id")
-	models.NewRoom(roomId, "")
+	server.NewRoom(roomId, "")
 	c.success(nil)
 }
 
 func (c *RoomController) Delete(){
 	roomId := c.GetString("id")
-	models.DelRoom(roomId)
+	server.DelRoom(roomId)
 	c.success(nil)
 }

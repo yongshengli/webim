@@ -4,8 +4,8 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 	"webim/comet/controllers"
-	"webim/comet/models"
 	"webim/comet/common"
+	"webim/comet/server"
 )
 
 func main() {
@@ -31,11 +31,9 @@ func main() {
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)
 
-	models.InitSessionManager(100, 10000)
 	rpcPort := beego.AppConfig.String("rpcport")
-	//启动rpc 服务
-	go models.RunRpcServer(rpcPort)
-	go models.ServerManager.ReportLive(rpcPort)
+
+	server.Run(common.GetLocalIp(), rpcPort,100, 10000)
 
 	beego.Run()
 
