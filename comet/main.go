@@ -38,6 +38,5 @@ func main() {
 	go models.ServerManager.ReportLive(rpcPort)
 
 	beego.Run()
-	models.ServerManager.Remove(models.CurrentServer.Host)
 
 }

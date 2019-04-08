@@ -24,6 +24,8 @@ var (
 )
 
 func (sm *serverManger) ReportLive(port string){
+    sm.Register(port)
+
     t := time.NewTicker(time.Minute)
     defer t.Stop()
     for {
@@ -73,8 +75,8 @@ func (sm *serverManger) List() (map[string]ServerInfo, error) {
 }
 
 func (sm *serverManger) Remove(host string) (int, error){
-    beego.Info("remove server " + CurrentServer.Host)
-    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), []string{host}))
+    beego.Info("remove server " + host)
+    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), host))
 }
 
 func serverMapKey() string{
