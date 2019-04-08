@@ -75,16 +75,16 @@ func (s *Session) start() {
 
     for {
         select {
-        case <- s.stopChan:
-            s.Close()
-            return
+        case <-ticker.C:
+            s.ping()
+
         case req := <-s.reqChan:
             s.do(req)
         case rep := <-s.repChan:
             s.write(rep)
-
-        case <-ticker.C:
-            s.ping()
+        case <- s.stopChan:
+            s.Close()
+            return
         }
     }
 }
@@ -92,6 +92,12 @@ func (s *Session) Send(msg *Msg) {
     beego.Debug("session send call")
     s.repChan <- msg
 }
+
+//检查session是否有效
+func (s *Session) checkSession() bool{
+    return s.Manager.CheckSession(s)
+}
+
 func (s *Session)ping(){
     //当前session没有token信息则不发送ping,断开链接
     if s.checkSession() == false {
@@ -100,10 +106,6 @@ func (s *Session)ping(){
     }
     msg := &Msg{Type:TYPE_PING, Data:map[string]interface{}{"content":"ping"}}
     s.Send(msg)
-}
-//检查session是否有效
-func (s *Session) checkSession() bool{
-    return s.Manager.CheckSession(s)
 }
 
 func (s *Session) pong(){

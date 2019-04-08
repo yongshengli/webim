@@ -35,8 +35,9 @@ func main() {
 	rpcPort := beego.AppConfig.String("rpcport")
 	//启动rpc 服务
 	go models.RunRpcServer(rpcPort)
-	models.ServerManager.Register(rpcPort)
-	defer models.ServerManager.Remove()
+	go models.ServerManager.ReportLive(rpcPort)
 
 	beego.Run()
+	models.ServerManager.Remove(models.CurrentServer.Host)
+
 }
