@@ -23,6 +23,7 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
         ReqTime: time.Now().Unix(),
         Req:     msg,
     }
+    job.Rsp.DeviceToken = s.DeviceToken
     job.Rsp.Version = job.Req.Version
     job.Rsp.ReqId = job.Req.ReqId
     return &JobWorker{job, s}
@@ -53,11 +54,16 @@ func (j *JobWorker) Do() {
 }
 
 func (j *JobWorker) register() {
-    if _, ok := j.Req.Data["device_id"]; !ok {
+    data, err := j.decode(j.Req.Data)
+    if err!= nil{
+        logs.Error("msg[register decode err] err[%s]", err.Error())
+        return
+    }
+    if _, ok := data["device_id"]; !ok {
         return
     }
     appKey := beego.AppConfig.String("appkey")
-    deviceId := j.Req.Data["device_id"].(string)
+    deviceId := data["device_id"].(string)
     deviceToken := common.GenerateDeviceToken(deviceId, appKey)
     j.s.DeviceToken = deviceToken
     j.s.User.DeviceId = deviceId
@@ -67,15 +73,27 @@ func (j *JobWorker) register() {
     //保存token session信息到redis中
     j.s.Server.AddSession(j.s)
     j.Rsp.Type = TYPE_REGISTER
-    j.Rsp.Data = map[string]interface{}{"code": 0, "device_token": deviceToken}
+    j.Rsp.DeviceToken = deviceToken
+    resData := map[string]interface{}{"code": 0, "device_token": deviceToken}
+    resByte, err := json.Marshal(resData)
+    if err != nil {
+        logs.Error("msg[register encode err] err[%s]", err.Error())
+        return
+    }
+    j.Rsp.Data = string(resByte)
     j.s.Send(&j.Rsp)
 }
 func (j *JobWorker) leaveRoom() {
-    if _, ok := j.Req.Data["room_id"]; !ok {
+    data, err := j.decode(j.Req.Data)
+    if err!= nil{
+        logs.Error("msg[leaveRoom decode err] err[%s]", err.Error())
+        return
+    }
+    if _, ok := data["room_id"]; !ok {
         logs.Debug("msg[%s]","room_id为空")
         return
     }
-    roomId := j.Req.Data["room_id"].(string)
+    roomId := data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         logs.Error("msg[%s]", err.Error())
@@ -85,26 +103,44 @@ func (j *JobWorker) leaveRoom() {
         room.Leave(j.s)
     }
     j.Rsp.Type = TYPE_ROOM_MSG
-    j.Rsp.Data = map[string]interface{}{"code":0, "content":"ok"}
+    resData := map[string]interface{}{"code":0, "content":"ok"}
+    resByte, err := json.Marshal(resData)
+    if err != nil {
+        logs.Error("msg[leaveRoom encode err] err[%s]", err.Error())
+        return
+    }
+    j.Rsp.Data = string(resByte)
     j.s.Send(&j.Rsp)
 }
 func (j *JobWorker) joinRoom() {
-    if _, ok := j.Req.Data["room_id"]; !ok {
+    data, err := j.decode(j.Req.Data)
+    if err!= nil{
+        logs.Error("msg[joinRoom decode err] err[%s]", err.Error())
+        return
+    }
+    if _, ok := data["room_id"]; !ok {
         logs.Debug("msg[room_id为空]")
         return
     }
-    roomId := j.Req.Data["room_id"].(string)
+    roomId := data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         logs.Error("msg[%s]", err.Error())
         return
     }
     if room == nil {
-        data := make(map[string]interface{})
-        data["content"] = "房间不存在"
-        data["room_id"] = roomId
+        resData := make(map[string]interface{})
+        resData["code"] = 1
+        resData["content"] = "房间不存在"
+        resData["room_id"] = roomId
+
+        resByte, err := json.Marshal(resData)
+        if err != nil {
+            logs.Error("msg[joinRoom encode err] err[%s]", err.Error())
+            return
+        }
         j.Rsp.Type = TYPE_ROOM_MSG
-        j.Rsp.Data = data
+        j.Rsp.Data = string(resByte)
         j.s.Send(&j.Rsp)
     } else {
         res, err := room.Join(j.s)
@@ -113,41 +149,63 @@ func (j *JobWorker) joinRoom() {
             return
         }
         if res {
-            data := make(map[string]interface{})
-            data["content"] = j.s.User.Name + "进入房间"
-            j.Rsp.Data = data
+            resData := make(map[string]interface{})
+            resData["code"] = 1
+            resData["content"] = j.s.User.Name + "进入房间"
+            resByte, err := json.Marshal(resData)
+            if err != nil {
+                logs.Error("msg[joinRoom encode err] err[%s]", err.Error())
+                return
+            }
+            j.Rsp.Data = string(resByte)
             room.Broadcast(&j.Rsp)
         }
     }
 }
 func (j *JobWorker) roomMsg() {
-    if _, ok := j.Req.Data["room_id"]; !ok {
+    data, err := j.decode(j.Req.Data)
+    if err!= nil{
+        logs.Error("msg[roomMsg decode err] err[%s]", err.Error())
+        return
+    }
+    if _, ok := data["room_id"]; !ok {
         logs.Warn("msg[room_id为空]")
         return
     }
-    roomId := j.Req.Data["room_id"].(string)
+    roomId := data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         logs.Error("msg[查找房间失败] err[%s]", err.Error())
         return
     }
     if room == nil {
-        data := make(map[string]interface{})
-        data["content"] = "房间不存在"
-        data["room_id"] = roomId
+        resData := make(map[string]interface{})
+        resData["content"] = "房间不存在"
+        resData["room_id"] = roomId
+
         j.Rsp.Type = TYPE_ROOM_MSG
-        j.Rsp.Data = data
+        resByte, err := json.Marshal(resData)
+        if err != nil {
+            logs.Error("msg[roomMsg encode err] err[%s]", err.Error())
+            return
+        }
+        j.Rsp.Data = string(resByte)
         j.s.Send(&j.Rsp)
     } else {
         room.Broadcast(&j.Req)
     }
 }
 func (j *JobWorker) createRoom() {
-    if _, ok := j.Req.Data["room_id"]; !ok {
+    data, err := j.decode(j.Req.Data)
+    if err!= nil{
+        logs.Error("msg[createRoom decode err] err[%s]", err.Error())
+        return
+    }
+    if _, ok := data["room_id"]; !ok {
         logs.Warn("msg[room_id为空]")
         return
     }
-    roomId := j.Req.Data["room_id"].(string)
+    roomId := data["room_id"].(string)
     room, err := GetRoom(roomId)
     if err != nil {
         logs.Error("msg[%s]", err.Error())
@@ -161,9 +219,24 @@ func (j *JobWorker) createRoom() {
         logs.Error("msg[加入房间失败] err[%s]", err.Error())
         return
     }
-    data := make(map[string]interface{})
-    data["content"] = "创建房间成功"
+    resData := make(map[string]interface{})
+    resData["code"] = 0
+    resData["content"] = "创建房间成功"
     j.Rsp.Type = TYPE_CREATE_ROOM
-    j.Rsp.Data = data
+    resByte, err := json.Marshal(resData)
+    if err != nil {
+        logs.Error("msg[roomMsg encode err] err[%s]", err.Error())
+        return
+    }
+    j.Rsp.Data = string(resByte)
     j.s.Send(&j.Rsp)
+}
+
+func (j *JobWorker) decode(jsonStr string) (map[string]interface{}, error) {
+    data := map[string]interface{}{}
+    err := json.Unmarshal([]byte(jsonStr), &data)
+    if err!=nil{
+        return nil, err
+    }
+    return data, err
 }

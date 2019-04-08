@@ -30,7 +30,7 @@ type Session struct {
     Server        *server // 该Session归属于哪个Server
     IP            string  //用户所属机器ip
     reqChan       chan *Msg
-    repChan       chan *Msg
+    rspChan       chan *Msg
     stopChan      chan bool
     sendFailCount int
 }
@@ -53,7 +53,7 @@ func NewSession(conn *websocket.Conn, s *server) *Session {
         IP:            s.Host,
         stopChan:      make(chan bool),
         reqChan:       make(chan *Msg, 1000),
-        repChan:       make(chan *Msg, 1000),
+        rspChan:       make(chan *Msg, 1000),
         sendFailCount: 0,
     }
 }
@@ -84,7 +84,7 @@ func (s *Session) start() {
 
         case req := <-s.reqChan:
             s.do(req)
-        case rep := <-s.repChan:
+        case rep := <-s.rspChan:
             s.write(rep)
         case <- s.stopChan:
             s.Close()
@@ -94,7 +94,7 @@ func (s *Session) start() {
 }
 func (s *Session) Send(msg *Msg) {
     beego.Debug("session send call")
-    s.repChan <- msg
+    s.rspChan <- msg
 }
 
 //检查session是否有效
@@ -108,12 +108,12 @@ func (s *Session)ping(){
         s.Close()
         return
     }
-    msg := &Msg{Type:TYPE_PING, Data:map[string]interface{}{"content":"ping"}}
+    msg := &Msg{Type:TYPE_PING, Data:""}
     s.Send(msg)
 }
 
 func (s *Session) pong(){
-    msg := &Msg{Type:TYPE_PONG, Data:map[string]interface{}{"content":"pong"}}
+    msg := &Msg{Type:TYPE_PONG, Data:""}
     s.Send(msg)
 }
 func (s *Session) write(msg *Msg) error {
@@ -150,10 +150,10 @@ func (s *Session) do(msg *Msg) {
     //没有带deviceToken的链接不予许访问register以外的业务方法
     if msg.Type != TYPE_REGISTER{
         if s.checkSession() == false {
-            if token, ok := msg.Data["device_token"]; ok{
-                s.DeviceToken = token.(string)
+            if msg.DeviceToken != "" {
+                s.DeviceToken = msg.DeviceToken
                 s.Server.AddSession(s)
-            }else{
+            } else {
                 return
             }
         }

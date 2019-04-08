@@ -35,11 +35,12 @@ type Job struct {
 }
 
 type Msg struct {
-	Type    float64                `json:"type" valid:"Required"`
-	Version string                 `json:"version"`
-	ReqId   string                 `json:"req_id"`
-	Encode  string                 `json:"encode"`
-	Data    map[string]interface{} `json:"data"`
+	Type        float64 `json:"type" valid:"Required"`
+	DeviceToken string  `json:"device_token"`
+	Version     string  `json:"version"`
+	ReqId       string  `json:"req_id"`
+	Encode      string  `json:"encode"`
+	Data        string  `json:"data"`
 }
 
 func Map2Msg(data map[string]interface{}) (Msg, error){

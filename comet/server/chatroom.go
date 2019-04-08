@@ -88,7 +88,7 @@ func (r *Room) Join(s *Session) (bool, error){
 	//r.users[s.Id] = RUser{SId:s.Id, Ip:s.IP, User:*s.User}
 	//退出旧房间
 	if s.RoomId != "" {
-		beego.Debug("用户%s退出旧房间%s", s.DeviceToken, s.RoomId)
+		beego.Debug("msg[用户%s退出旧房间%s]", s.DeviceToken, s.RoomId)
 		oldR, _ := GetRoom(s.RoomId)
 		if oldR != nil {
 			oldR.Leave(s)
@@ -133,7 +133,7 @@ func (r *Room) Leave(s *Session) (bool, error){
 
 	if userNum < 1 {
 		DelRoom(r.Id)
-		beego.Debug("房间%d内用户为空删除房间", r.Id)
+		beego.Debug("msg[房间%d内用户为空删除房间]", r.Id)
 	}
 	return true, nil
 }
@@ -141,7 +141,13 @@ func (r *Room) Leave(s *Session) (bool, error){
 
 //房间内广播
 func (r *Room) Broadcast(msg *Msg) (bool, error){
-	msg.Data["room_id"] = r.Id
+	resData := map[string]interface{}{}
+	resData["room_id"] = r.Id
+	jsonByte, err := json.Marshal(resData)
+	if err != nil {
+		return false, err
+	}
+	msg.Data = string(jsonByte)
 	msg.Type = TYPE_ROOM_MSG
 	beego.Debug("msg[room broadcast]")
 	users, err := r.Users()
@@ -151,7 +157,9 @@ func (r *Room) Broadcast(msg *Msg) (bool, error){
 	//beego.Debug("msg[room中的用户] users[%s]", users)
 	for _, user := range users{
 		//session.Send(msg)
-        Server.Unicast(user.(RUser).DeviceToken, *msg)
+		tmsg := *msg
+		tmsg.DeviceToken = user.(RUser).DeviceToken
+        Server.Unicast(tmsg.DeviceToken, tmsg)
 	}
 	return true, nil
 }

@@ -5,14 +5,14 @@ $(document).ready(function () {
     socket = new WebSocket('ws://' + window.location.host + '/ws?uname=' + $('#uname').text());
     socket.onopen = function() {
         console.log("建立长连接");
-        var data = {"type": 11, "data": {"device_id": $('#uname').text()}}
+        var data = {"type": 11, "data": JSON.stringify({"device_id": $('#uname').text()})}
         socket.send(JSON.stringify(data))
     };
     // Message received on the socket
     socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
         var li = document.createElement('li');
-
+        data.data = JSON.parse(data.data)
         console.log(data);
 
         switch (data['type']) {
@@ -25,7 +25,7 @@ $(document).ready(function () {
                 break;
             case 11:
                 alert("device_token:" + data['data']['device_token'])
-                var data = {"type":4,"data":{"room_id":"1"}}
+                var data = {"type":4,"data": JSON.stringify({"room_id":"1"})}
                 socket.send(JSON.stringify(data))
                 break;
             case 2: // JOIN
@@ -57,11 +57,11 @@ $(document).ready(function () {
             case 99:
                 var data = {
                     "type": 100,
-                    "data": {
+                    "data": JSON.stringify({
                         "sid": sid,
                         "uname": $('#uname').text(),
                         "content": ""
-                    }
+                    })
                 }
                 socket.send(JSON.stringify(data));
         }
@@ -76,12 +76,12 @@ $(document).ready(function () {
         }
         var data = {
             "type": 1,
-            "data": {
+            "data": JSON.stringify({
                 "room_id": "1",
                 "device_token": sid,
                 "uname": $('#uname').text(),
                 "content": $('#sendbox').val()
-            }
+            })
         }
         socket.send(JSON.stringify(data));
         $('#sendbox').val('');
