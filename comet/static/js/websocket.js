@@ -12,7 +12,9 @@ $(document).ready(function () {
     socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
         var li = document.createElement('li');
-        data.data = JSON.parse(data.data)
+        if (data.data!="") {
+            data.data = JSON.parse(data.data)
+        }
         console.log(data);
 
         switch (data['type']) {

@@ -7,6 +7,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"errors"
 	"time"
+	"github.com/astaxie/beego/logs"
 )
 
 type RUser struct {
@@ -142,8 +143,16 @@ func (r *Room) Leave(s *Session) (bool, error){
 //房间内广播
 func (r *Room) Broadcast(msg *Msg) (bool, error){
 	resData := map[string]interface{}{}
-	resData["room_id"] = r.Id
-	jsonByte, err := json.Marshal(resData)
+	if msg.Data != "" {
+		err := common.DeJson([]byte(msg.Data), &resData)
+		if err != nil {
+			logs.Error("msg[Broadcast DeJson err] err[%s]", err.Error())
+			return false, err
+		}
+	} else {
+		resData["room_id"] = r.Id
+	}
+	jsonByte, err := common.EnJson(resData)
 	if err != nil {
 		return false, err
 	}
