@@ -46,7 +46,7 @@ func newServer(host, port string, slotContainerLen, slotLen int) *server {
     for i := 0; i < slotContainerLen; i++ {
         s.slotContainer[i] = NewSlot(slotLen)
     }
-    s.context.Register(s.Info.Host, s)
+    s.context.Register(s.Info.Host, s.Info)
     return s
 }
 
@@ -62,7 +62,7 @@ func (s *server) ReportLive(){
     defer t.Stop()
     for {
         <- t.C
-        s.context.Register(s.Host, s)
+        s.context.Register(s.Host, s.Info)
         logs.Debug("msg[服务报活] ip[%s]", s.Host)
     }
 }

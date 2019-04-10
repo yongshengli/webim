@@ -6,8 +6,8 @@ import (
 
 func TestMapToMsg(t *testing.T) {
     arr := []map[string]interface{}{
-        {"type":float64(10), "data":map[string]interface{}{}},
-        {"type":float64(1), "data":map[string]interface{}{}},
+        {"type":float64(10), "data":""},
+        {"type":float64(1), "data":""},
     }
     for _, m := range arr {
         msg, err := Map2Msg(m)

@@ -11,7 +11,7 @@ import (
 type Context struct {
 }
 
-func (sm *Context) Register(host string, server *server) (int, error){
+func (sm *Context) Register(host string, server Info) (int, error){
     server.LastActive = time.Now().Unix()
     b, err := json.Marshal(server)
     if err!=nil{
