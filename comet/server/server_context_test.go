@@ -11,7 +11,6 @@ func TestServer_Register(t *testing.T) {
         Host : "127.0.0.1",
         Port : "8000",
     }
-
     common.RedisInitTest()
     context := new(Context)
     _, err := context.Register(server.Host, server)
