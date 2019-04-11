@@ -4,12 +4,10 @@ import (
     "errors"
     "github.com/astaxie/beego/logs"
     "github.com/gomodule/redigo/redis"
-    "sync"
     "time"
 )
 
 var (
-    once   = sync.Once{}
     RedisClient *redisClient
 )
 
@@ -96,31 +94,29 @@ func (r *redisClient) Decr(key string) (bool, error) {
     return rep, err
 }
 func (r *redisClient) initRedisPool(conf map[string]string) {
-    once.Do(func() {
-        dialFunc := func() (c redis.Conn, err error) {
-            addr := conf["host"] + ":" + conf["port"]
-            c, err = redis.Dial("tcp", addr)
-            if err != nil {
-                logs.Info("msg[conn_to_redis_failure:%s] addr[%s]", err.Error(), addr)
-                return nil, err
-            }
-            _, selecterr := c.Do("SELECT", 0)
-            if selecterr != nil {
-                c.Close()
-                return nil, selecterr
-            }
-            logs.Info("msg[get_redis_conn_success] addr[%s]", addr)
-            return
+    dialFunc := func() (c redis.Conn, err error) {
+        addr := conf["host"] + ":" + conf["port"]
+        c, err = redis.Dial("tcp", addr)
+        if err != nil {
+            logs.Info("msg[conn_to_redis_failure:%s] addr[%s]", err.Error(), addr)
+            return nil, err
         }
-        // initialize a new pool
-        r.pool = &redis.Pool{
-            Wait:true,//，当程序执行get()，无法获得可用连接时，将会暂时阻塞。
-            MaxIdle:     500,
-            MaxActive:	 5000,//设MaxActive=0(表示无限大)或者足够大。
-            IdleTimeout: 180 * time.Second,
-            Dial:        dialFunc,
+        _, selecterr := c.Do("SELECT", 0)
+        if selecterr != nil {
+            c.Close()
+            return nil, selecterr
         }
-    })
+        logs.Info("msg[get_redis_conn_success] addr[%s]", addr)
+        return
+    }
+    // initialize a new pool
+    r.pool = &redis.Pool{
+        Wait:        true, //，当程序执行get()，无法获得可用连接时，将会暂时阻塞。
+        MaxIdle:     500,
+        MaxActive:   5000, //设MaxActive=0(表示无限大)或者足够大。
+        IdleTimeout: 180 * time.Second,
+        Dial:        dialFunc,
+    }
 }
 
 func arrStr2ArrInterface(keys []string) []interface{} {
@@ -140,6 +136,9 @@ func (r *redisClient) Do(commandName string, args ...interface{}) (reply interfa
 }
 
 func RedisInit(conf map[string]string) {
+    if RedisClient != nil {
+        return
+    }
     RedisClient = &redisClient{}
     RedisClient.initRedisPool(conf)
 }

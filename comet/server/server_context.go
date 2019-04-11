@@ -14,11 +14,11 @@ type Context struct {
 func (sm *Context) Register(host string, server Info) (int, error){
     server.LastActive = time.Now().Unix()
     b, err := json.Marshal(server)
-    if err!=nil{
+    if err != nil {
         beego.Error(err)
         return 0, err
     }
-    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), server.Host, string(b)))
+    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), host, string(b)))
 }
 
 func (sm *Context) List() (map[string]Info, error) {
