@@ -32,16 +32,18 @@ func GetLocalIp() string {
     }
     return localIp
 }
+
 /**
  * 设成设备token
  */
-func GenerateDeviceToken(deviceId string, appKey string) string{
-    return Md5(deviceId+"|"+appKey)
+func GenerateDeviceToken(deviceId string, appKey string) string {
+    return Md5(deviceId + "|" + appKey)
 }
+
 /**
  * MD5编码
  */
-func Md5 (text string) string {
+func Md5(text string) string {
     encoder := md5.New()
     encoder.Write([]byte(text))
     return hex.EncodeToString(encoder.Sum(nil))

@@ -5,6 +5,9 @@ import (
 	"github.com/beego/i18n"
 	"strings"
 	"encoding/json"
+	"github.com/astaxie/beego/logs"
+	"webim/comet/common"
+	"time"
 )
 
 func init() {
@@ -38,6 +41,7 @@ func (c *BaseController) Prepare() {
         }
     }
 	c.Data["params"] = params
+	c.Data["req_time"] = time.Now().Unix()
 }
 
 type Response struct {
@@ -52,6 +56,7 @@ func (c *BaseController) success(data map[string]interface{}) {
 		Msg:  "ok",
 		Data: data,
 	}
+	c.log()
 	c.ServeJSON()
 }
 func (c *BaseController) error(msg string) {
@@ -60,5 +65,26 @@ func (c *BaseController) error(msg string) {
 		Msg:  msg,
 		Data: nil,
 	}
+	c.log()
 	c.ServeJSON()
+}
+
+func (c *BaseController) log(){
+	req := map[string]interface{}{}
+	req["params"] =  c.Data["params"]
+	req["time"] =  c.Data["req_time"]
+	reqByte, err := common.EnJson(req)
+	if err!=nil{
+		logs.Error("msg[base::log req json encode err] err[%s]", err)
+		return
+	}
+	rsp := map[string]interface{}{}
+	rsp["result"] = c.Data["json"]
+	rsp["time"] = time.Now().Unix()
+	rspByte, err := common.EnJson(rsp)
+	if err!=nil{
+		logs.Error("msg[base::log rsp json encode err] err[%s]", err)
+		return
+	}
+	logs.Info("req[%s] rsp[%s]", string(reqByte), string(rspByte))
 }
