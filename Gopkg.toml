@@ -50,3 +50,7 @@ ignored = [
 [[constraint]]
   branch = "master"
   name = "github.com/pquerna/ffjson"
+
+[[constraint]]
+  branch = "hash64-xo"
+  name = "github.com/dgryski/go-farm"

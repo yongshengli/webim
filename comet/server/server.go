@@ -9,8 +9,8 @@ import (
     "net/rpc/jsonrpc"
     "time"
     "github.com/astaxie/beego/logs"
-    "comet/src/rrx/farm"
     "sync"
+    "github.com/dgryski/go-farm"
 )
 
 var Server *server

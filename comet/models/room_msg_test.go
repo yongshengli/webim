@@ -27,3 +27,12 @@ func TestRoomMsgInsert(t *testing.T){
     }
     fmt.Println(res)
 }
+
+func TestRoomMsgTableName(t *testing.T) {
+    initMysql()
+    res, err:= FindRoomMsgLast("sss", 12)
+    if err!=nil{
+        fmt.Println(err)
+    }
+    fmt.Println(res)
+}

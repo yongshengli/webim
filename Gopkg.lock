@@ -16,6 +16,7 @@
     "context/param",
     "grace",
     "logs",
+    "orm",
     "session",
     "toolbox",
     "utils"
@@ -28,6 +29,18 @@
   name = "github.com/beego/i18n"
   packages = ["."]
   revision = "e9308947f407a24aaa1e7dbe35a01931e99cb255"
+
+[[projects]]
+  branch = "hash64-xo"
+  name = "github.com/dgryski/go-farm"
+  packages = ["."]
+  revision = "c33a81abcbb1db936de6fc5703e60733312b5686"
+
+[[projects]]
+  name = "github.com/go-sql-driver/mysql"
+  packages = ["."]
+  revision = "a0583e0143b1624142adab07e0e97fe106d99561"
+  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/gomodule/redigo"
@@ -69,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2c4d94704af3b35f10311e0ca89975e392b9bf88427f822a1becdd446826401c"
+  inputs-digest = "989bd4df9c9580ebc4d284e660ae3f7c35fb96a4d9f048d6c8d091e0280db488"
   solver-name = "gps-cdcl"
   solver-version = 1
