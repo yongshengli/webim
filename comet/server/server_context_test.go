@@ -6,7 +6,7 @@ import (
     "webim/comet/common"
 )
 
-func TestServer_Register(t *testing.T) {
+func TestServerRegister(t *testing.T) {
     server := Info{
         Host : "127.0.0.1",
         Port : "8000",

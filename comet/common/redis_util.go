@@ -5,14 +5,17 @@ import (
     "github.com/astaxie/beego/logs"
     "github.com/gomodule/redigo/redis"
     "time"
+    "sync"
 )
 
 var (
-    RedisClient *redisClient
+    RedisClient = &redisClient{}
 )
 
 type redisClient struct {
+    sync.RWMutex    // only used outsite for bootStrap
     pool *redis.Pool
+    done bool
 }
 
 func (r *redisClient) Get(key string) (interface{}, error) {
@@ -136,10 +139,11 @@ func (r *redisClient) Do(commandName string, args ...interface{}) (reply interfa
 }
 
 func RedisInit(conf map[string]string) {
-    if RedisClient != nil {
+    if RedisClient.done {
         return
     }
-    RedisClient = &redisClient{}
+    RedisClient.Lock()
+    defer RedisClient.Unlock()
     RedisClient.initRedisPool(conf)
 }
 func RedisInitTest(){
