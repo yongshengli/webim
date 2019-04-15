@@ -21,14 +21,17 @@ func RoomMsgTableName(roomId string) string {
     return fmt.Sprintf("room_msg_%d", int(h)%ROOM_MSG_NUM)
 }
 
-func FindRoomMsgLast(roomId string, limit int) (arr []RoomMsg, err error) {
+func FindRoomMsgLast(roomId string, limit int) (total int64, arr []RoomMsg, err error) {
     arr = []RoomMsg{}
     o := orm.NewOrm()
     sqlStr := fmt.Sprintf(`select * from %s where room_id=? order by id desc limit ?`, RoomMsgTableName(roomId))
-    res, err := o.Raw(sqlStr,  roomId, limit).QueryRows(&arr)
+    total, err = o.Raw(sqlStr,  roomId, limit).QueryRows(&arr)
     if err!=nil{
         return
     }
-    fmt.Println(res)
     return
+}
+func InsertRoomMsg(roomId, data map[string]interface{}){
+    o := orm.NewOrm()
+    o.Raw(``).Exec()
 }
