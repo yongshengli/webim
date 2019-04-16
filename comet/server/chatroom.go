@@ -8,6 +8,8 @@ import (
     "time"
     "github.com/astaxie/beego/logs"
     "reflect"
+    "webim/comet/models"
+    "strconv"
 )
 
 type RUser struct {
@@ -219,4 +221,32 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
         Server.Unicast(tmsg.DeviceToken, tmsg)
     }
     return true, nil
+}
+
+func SaveRoomMsg(roomId string, msg *Msg) (uint64, error){
+    var msgData map[string]interface{}
+    err := common.DeJson([]byte(msg.Data), &msgData)
+    if err != nil {
+        logs.Error("msg[SaveRoomMsg DeJson err] err[%s]", err.Error())
+        return 0, err
+    }
+    content, ok := msgData["content"]
+    if !ok {
+        logs.Error("msg[SaveRoomMsg msg.Data 中不包含content]")
+        return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
+    }
+    uid, ok := msgData["uid"]
+    if !ok{
+        logs.Error("msg[SaveRoomMsg msg.Data 中不包含uid]")
+        return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
+    }
+    var uidInt int64
+    if reflect.ValueOf(uid).Kind() == reflect.String{
+        uidInt, _ = strconv.ParseInt(uid.(string), 10, 64)
+    }else{
+        uidInt = int64(uid.(float64))
+    }
+    roomMsg := &models.RoomMsg{RoomId: roomId, Content: content.(string), Uid: uidInt, CT: time.Now().Unix()}
+    res := models.InsertRoomMsg(roomId, roomMsg)
+    return roomMsg.Id, res.Error
 }

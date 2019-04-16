@@ -9,9 +9,9 @@ import (
 const ROOM_MSG_NUM = 1024
 
 type RoomMsg struct {
-    Id      uint `gorm:"primary_key"`
+    Id      uint64 `gorm:"primary_key"`
     RoomId  string
-    Uid     int
+    Uid     int64
     Content string
     CT      int64 `gorm:"column:c_t"`
 }
