@@ -3,7 +3,6 @@ package server
 import (
     "github.com/astaxie/beego/logs"
     "webim/comet/common"
-    "encoding/json"
     "github.com/astaxie/beego"
     "github.com/gomodule/redigo/redis"
     "errors"
@@ -17,12 +16,13 @@ func saveDeviceTokenInfo(user *User) (string, error) {
     if len(user.DeviceToken) < 1 {
         return "", errors.New("DeviceToken为空")
     }
-    jsonStr, err := json.Marshal(user)
-    if err != nil {
+
+    if jsonStr, err := common.EnJson(user); err != nil {
         beego.Error(err)
         return "", err
+    }else {
+        return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, SESSION_LIVE_TIME)
     }
-    return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, SESSION_LIVE_TIME)
 }
 func getDeviceTokenByUid(uid string) (string, error) {
     return redis.String(common.RedisClient.Get(uidKey(uid)))
@@ -42,13 +42,11 @@ func getDeviceTokenInfo(deviceToken string) (map[string]string, error) {
     if tmpRes[0] == nil {
         return nil, nil
     }
-    err = json.Unmarshal(tmpRes[0].([]byte), &res)
-    if err != nil {
+    if err = common.DeJson(tmpRes[0].([]byte), &res); err != nil {
         logs.Error("msg[解析json失败] method[getDeviceTokenInfo] err[%s]", err.Error())
         return nil, err
     }
-    ttl := tmpRes[1].(int64)
-    if ttl < 3600 {
+    if ttl := tmpRes[1].(int64); ttl < 3600 {
         _, err = common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME)
         if err != nil {
             logs.Error("msg[延长session有效期失败] err[%s]", err.Error())

@@ -60,26 +60,30 @@ func TotalRoom() (num int, err error){
 }
 
 func GetRoom(id string) (*Room, error){
-	roomJson, err := common.RedisClient.Get(roomKey(id))
+	roomRedisKey := roomKey(id)
+	res, err := common.RedisClient.Multi(func(conn redis.Conn){
+		conn.Send("GET", roomRedisKey)
+		conn.Send("TTL", roomRedisKey)
+	})
 	if err != nil {
 		logs.Error("msg[获取房间失败] err[%s]", err.Error())
 		return nil, err
 	}
-	if roomJson == nil {
+	if res == nil {
 		return nil, nil
 	}
+	result := res.([]interface{})
 	var room Room
-	err = json.Unmarshal(roomJson.([]byte), &room)
-	if err != nil {
+	if result[0] == nil{
+		return nil, nil
+	}
+	if err = common.DeJson(result[0].([]byte), &room); err != nil {
 		logs.Error("msg[GetRoom解析room redis data err] err[%s]", err.Error())
 		return nil, err
 	}
-	ttl, err := common.RedisClient.Ttl(roomKey(id))
-	if err != nil {
-		logs.Error("msg[获取room redis data ttl err] err[%s]", err.Error())
-	}
-	if ttl < 3600*3 {
-		_, err = common.RedisClient.Expire(roomKey(id), ROOM_LIVE_TIME)
+
+	if ttl := result[1].(int64); ttl < 3600*3 {
+		_, err = common.RedisClient.Expire(roomRedisKey, ROOM_LIVE_TIME)
 		if err != nil {
 			logs.Error("msg[延长room data redis 时间失败] err[%s]", err.Error())
 		}
@@ -189,8 +193,7 @@ func (r *Room) Leave(s *Session) (bool, error){
 func (r *Room) Broadcast(msg *Msg) (bool, error){
 	resData := map[string]interface{}{}
 	if msg.Data != "" {
-		err := common.DeJson([]byte(msg.Data), &resData)
-		if err != nil {
+		if err := common.DeJson([]byte(msg.Data), &resData); err != nil {
 			logs.Error("msg[Broadcast DeJson err] err[%s]", err.Error())
 			return false, err
 		}

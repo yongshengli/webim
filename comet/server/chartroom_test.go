@@ -54,4 +54,8 @@ func TestNewRoom(t *testing.T) {
     if res<1{
      t.Error("删除聊天室失败")
     }
+    room, err = GetRoom(roomId)
+    if err!= nil{
+        t.Error(err)
+    }
 }
