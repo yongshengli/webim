@@ -238,7 +238,7 @@ func saveDeviceTokenInfo(user *User) (string, error) {
         beego.Error(err)
         return "", err
     }
-    return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, 3600*24*time.Second)
+    return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, SESSION_LIVE_TIME)
 }
 func getDeviceTokenByUid(uid string) (string, error) {
     return redis.String(common.RedisClient.Get(uidKey(uid)))
@@ -246,14 +246,26 @@ func getDeviceTokenByUid(uid string) (string, error) {
 
 func getDeviceTokenInfoByDeviceToken(deviceToken string) (map[string]string, error) {
     var res map[string]string
-    replay, err := common.RedisClient.Get(deviceTokenKey(deviceToken))
+    tokenKey := deviceTokenKey(deviceToken)
+    replay, err := common.RedisClient.Multi(func (conn redis.Conn){
+        conn.Send("GET", tokenKey)
+        conn.Send("TTL", tokenKey)
+    })
     if replay == nil {
         return nil, err
     }
-    err = json.Unmarshal(replay.([]byte), &res)
+    tmpRes := replay.([]interface{})
+    err = json.Unmarshal(tmpRes[0].([]byte), &res)
     if err != nil {
         logs.Error("msg[解析json失败] method[getDeviceTokenInfoByDeviceToken] err[%s]", err.Error())
         return nil, err
+    }
+    ttl := tmpRes[1].(int)
+    if ttl < 3600 {
+        _, err = common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME)
+        if err != nil {
+            logs.Error("msg[延长session有效期失败] err[%s]", err.Error())
+        }
     }
     return res, nil
 }

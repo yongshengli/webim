@@ -11,8 +11,6 @@ import (
 	"reflect"
 )
 
-const ROOM_LIVE_TIME = time.Hour*24*7
-
 type RUser struct {
 	DeviceToken string `json:"device_token"`
 	IP          string `json:"ip"`   //sid 所在机器ip
