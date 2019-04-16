@@ -2,7 +2,6 @@ package models
 
 import (
     "testing"
-    "github.com/astaxie/beego/orm"
     "fmt"
     _ "github.com/go-sql-driver/mysql" // import your used driver
     "time"
@@ -11,12 +10,10 @@ import (
 func TestRoomMsgInsert(t *testing.T){
 
     ConnectTestMysql()
-
-    o := orm.NewOrm()
-    roomMsg := RoomMsg{RoomId:"1", Content:"ssssss", Uid:123}
-    res, err := o.Insert(&roomMsg)
-    if err != nil {
-        t.Error(err)
+    roomMsg := RoomMsg{RoomId:"1", Content:"sss", Uid:123, CT:time.Now().Unix()}
+    res := InsertRoomMsg(roomMsg.RoomId, &roomMsg)
+    if res.RowsAffected < 1 {
+        t.Error("插入失败")
     }
     fmt.Println(res)
 }
