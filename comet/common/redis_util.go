@@ -21,7 +21,7 @@ type redisClient struct {
 func (r *redisClient) Get(key string) (interface{}, error) {
     reply, err := r.Do("GET", key)
     if err != nil {
-        logs.Error("msg[redis_get_failed:%s]", err.Error())
+        logs.Error("msg[redis get err] err[%s] key[%s]", err.Error(), key)
     }
     return reply, err
 }
@@ -29,9 +29,17 @@ func (r *redisClient) Get(key string) (interface{}, error) {
 func (r *redisClient) Ttl(key string) (int64, error) {
     ttl, err := r.Do("ttl", key)
     if err != nil {
-        logs.Error("msg[redis_get_failed:%s]", err.Error())
+        logs.Error("msg[redis ttl err] err[%s] key[%s]", err.Error(), key)
     }
-    return ttl.(int64), err
+    return redis.Int64(ttl, err)
+}
+
+func (r *redisClient) Expire(key string, timeout time.Duration) (int64, error){
+    res, err := r.Do("EXPIRE", key, int64(timeout/time.Second))
+    if err!=nil{
+        logs.Error("msg[redis Expire err] err[%s] key[%s]", err.Error(), key)
+    }
+    return redis.Int64(res, err)
 }
 
 func (r *redisClient) GetString(key string) string {
@@ -41,7 +49,7 @@ func (r *redisClient) GetString(key string) string {
 func (r *redisClient) Set(key string, val interface{}, timeout time.Duration) (string, error) {
     reply, err := redis.String(r.Do("SETEX", key, int64(timeout/time.Second), val))
     if err != nil {
-        logs.Error("msg[redis_setex_failed:%s]", err.Error())
+        logs.Error("msg[redis setex err] err[%s] key[%s] val[%v]", err.Error(), key, val)
         return "", err
     }
     return reply, nil
@@ -50,7 +58,7 @@ func (r *redisClient) MgetString(keys []string) ([]string, error) {
     tKeys := arrStr2ArrInterface(keys)
     rep, err := redis.Strings(r.Do("MGET", tKeys...))
     if err != nil {
-        logs.Error("msg[redis_mget_failed:%s]", err.Error())
+        logs.Error("msg[redis mget string err] err[%s]", err.Error())
     }
     return rep, err
 }
@@ -58,7 +66,7 @@ func (r *redisClient) Mget(keys []string) ([]interface{}, error) {
     tKeys := arrStr2ArrInterface(keys)
     rep, err := redis.Values(r.Do("MGET", tKeys...))
     if err != nil {
-        logs.Error("msg[redis_mget_failed:%s]", err.Error())
+        logs.Error("msg[redis mget err] err[%s]", err.Error())
     }
     return rep, err
 }
@@ -66,7 +74,7 @@ func (r *redisClient) Mget(keys []string) ([]interface{}, error) {
 func (r *redisClient) Exists(key string) (bool, error){
     rep, err :=redis.Bool(r.Do("EXISTS", key))
     if err!=nil{
-        logs.Error("msg[redis_exists_failed:%s]", err.Error())
+        logs.Error("msg[redis exists err] err[%s] key[%s]", err.Error(), key)
     }
     return rep, err
 }
@@ -75,7 +83,7 @@ func (r *redisClient) Del(keys []string) (int, error) {
     tKeys := arrStr2ArrInterface(keys)
     num, err := redis.Int(r.Do("DEL", tKeys...))
     if err != nil {
-        logs.Error("msg[redis_del_failed:%s]", err.Error())
+        logs.Error("msg[redis del err] err[%s]", err.Error())
     }
     return num, err
 }
@@ -83,7 +91,7 @@ func (r *redisClient) Del(keys []string) (int, error) {
 func (r *redisClient) Incr(key string) (bool, error) {
     rep, err := redis.Bool(r.Do("INCR", key))
     if err != nil {
-        logs.Error("msg[redis_incr_failed:%s]", err.Error())
+        logs.Error("msg[redis incr err] err[%s] key[%s]", err.Error(), key)
     }
     return rep, err
 }
@@ -92,7 +100,7 @@ func (r *redisClient) Incr(key string) (bool, error) {
 func (r *redisClient) Decr(key string) (bool, error) {
     rep, err := redis.Bool(r.Do("DECR", key))
     if err != nil {
-        logs.Error("msg[redis_decr_failed:%s]", err.Error())
+        logs.Error("msg[redis decr err] err[%s] key[%s]", err.Error(), key)
     }
     return rep, err
 }
@@ -101,7 +109,7 @@ func (r *redisClient) initRedisPool(conf map[string]string) {
         addr := conf["host"] + ":" + conf["port"]
         c, err = redis.Dial("tcp", addr)
         if err != nil {
-            logs.Info("msg[conn_to_redis_failure:%s] addr[%s]", err.Error(), addr)
+            logs.Info("msg[conn_to_redis_failure] err[%s] addr[%s]", err.Error(), addr)
             return nil, err
         }
         _, selecterr := c.Do("SELECT", 0)

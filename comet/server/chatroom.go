@@ -25,7 +25,7 @@ func NewRoom(id string, name string) (*Room, error){
 	room := &Room{Id:id, Name:name}
 	roomJson, err := json.Marshal(room)
 	if err != nil {
-		logs.Error("msg[room struct json encode err] err[%s]", err)
+		logs.Error("msg[room struct json encode err] err[%s]", err.Error())
 		return nil, err
 	}
 	res, err := common.RedisClient.Multi(func(conn redis.Conn){
@@ -34,7 +34,7 @@ func NewRoom(id string, name string) (*Room, error){
 	})
 	//fmt.Println(res)
 	if err != nil {
-		logs.Error("msg[新建Room失败] err[%s] result[%s]", err, res)
+		logs.Error("msg[新建Room失败] err[%s] result[%s]", err.Error(), res)
 		return nil, err
 	}
 	return room, nil
@@ -61,16 +61,25 @@ func TotalRoom() (num int, err error){
 
 func GetRoom(id string) (*Room, error){
 	roomJson, err := common.RedisClient.Get(roomKey(id))
-	if err!=nil{
+	if err != nil {
+		logs.Error("msg[获取房间失败] err[%s]", err.Error())
 		return nil, err
 	}
-	if roomJson==nil{
+	if roomJson == nil {
 		return nil, nil
 	}
 	var room Room
 	err = json.Unmarshal(roomJson.([]byte), &room)
-	if err!=nil{
+	if err != nil {
+		logs.Error("msg[GetRoom解析room redis data err] err[%s]", err.Error())
 		return nil, err
+	}
+	ttl, err := common.RedisClient.Ttl(roomKey(id))
+	if err != nil{
+		logs.Error("msg[获取room redis data ttl err] err[%s]", err.Error())
+	}
+	if ttl < 3600*3 {
+		common.RedisClient.Ttl()
 	}
 	return &room, nil
 }
