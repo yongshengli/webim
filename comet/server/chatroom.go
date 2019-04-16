@@ -236,7 +236,7 @@ func SaveRoomMsg(roomId string, msg *Msg) (uint64, error){
         return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
     }
     uid, ok := msgData["uid"]
-    if !ok{
+    if !ok {
         logs.Error("msg[SaveRoomMsg msg.Data 中不包含uid]")
         return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
     }
