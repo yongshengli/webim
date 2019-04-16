@@ -23,17 +23,13 @@ type Room struct {
 func NewRoom(id string, name string) (*Room, error){
 	room := &Room{Id:id, Name:name}
 	roomJson, err := json.Marshal(room)
-	if err!=nil{
+	if err != nil {
 		beego.Error(err)
 		return nil, err
 	}
 	//fmt.Println(string(roomJson))
-	common.RedisClient.Set(roomKey(id), roomJson, time.Second*3600*24*30)
+	common.RedisClient.Set(roomKey(id), roomJson, time.Hour*24*7)
 	return room, nil
-}
-
-func RoomList() []Room{
-	return []Room{}
 }
 
 func GetRoom(id string) (*Room, error){
