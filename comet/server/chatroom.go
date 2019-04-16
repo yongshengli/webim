@@ -80,7 +80,7 @@ func DelRoom(id string) (int, error){
 		conn.Send("DEL", roomKey(id))
 		conn.Send("ZREM", roomZsetKey(), id)
 	})
-	if err!= nil{
+	if err != nil {
 		return 0, err
 	}
 	result := res.([]interface{})
