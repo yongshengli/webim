@@ -11,6 +11,8 @@ import (
 	"reflect"
 )
 
+const ROOM_LIVE_TIME = time.Hour*24*7
+
 type RUser struct {
 	DeviceToken string `json:"device_token"`
 	IP          string `json:"ip"`   //sid 所在机器ip
@@ -29,7 +31,7 @@ func NewRoom(id string, name string) (*Room, error){
 		return nil, err
 	}
 	res, err := common.RedisClient.Multi(func(conn redis.Conn){
-		conn.Send("SETEX", roomKey(id), int(time.Hour*24*7/time.Second), roomJson)
+		conn.Send("SETEX", roomKey(id), int(ROOM_LIVE_TIME/time.Second), roomJson)
 		conn.Send("ZADD", roomZsetKey(), time.Now().Unix(), id)
 	})
 	//fmt.Println(res)
@@ -79,7 +81,10 @@ func GetRoom(id string) (*Room, error){
 		logs.Error("msg[获取room redis data ttl err] err[%s]", err.Error())
 	}
 	if ttl < 3600*3 {
-		common.RedisClient.Ttl()
+		_, err = common.RedisClient.Expire(roomKey(id), ROOM_LIVE_TIME)
+		if err != nil {
+			logs.Error("msg[延长room data redis 时间失败] err[%s]", err.Error())
+		}
 	}
 	return &room, nil
 }
