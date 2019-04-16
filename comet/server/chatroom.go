@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/astaxie/beego"
 	"webim/comet/common"
-	"encoding/json"
 	"github.com/gomodule/redigo/redis"
 	"errors"
 	"time"
@@ -23,7 +22,7 @@ type Room struct {
 
 func NewRoom(id string, name string) (*Room, error){
 	room := &Room{Id:id, Name:name}
-	roomJson, err := json.Marshal(room)
+	roomJson, err := common.EnJson(room)
 	if err != nil {
 		logs.Error("msg[room struct json encode err] err[%s]", err.Error())
 		return nil, err
@@ -128,7 +127,7 @@ func (r *Room) Users() (map[string]interface{}, error){
 	res := map[string]interface{}{}
 	for dt, st := range tmap {
 		ru := RUser{}
-		json.Unmarshal([]byte(st), &ru)
+		common.DeJson([]byte(st), &ru)
 		res[dt] = ru
 	}
 	return res, nil
@@ -153,7 +152,7 @@ func (r *Room) Join(s *Session) (bool, error){
 	if user!=nil{
 		return true, nil
 	}
-	jsonStr, err := json.Marshal(ru)
+	jsonStr, err := common.EnJson(ru)
 	if err!=nil{
 		return false, err
 	}
