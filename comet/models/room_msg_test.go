@@ -6,6 +6,7 @@ import (
     "fmt"
     _ "github.com/go-sql-driver/mysql" // import your used driver
     "github.com/jinzhu/gorm"
+    "time"
 )
 
 func connectMysql() (*gorm.DB, error){
@@ -36,15 +37,12 @@ func TestRoomMsgTableName(t *testing.T) {
 }
 func TestFindRoomMsgLast(t *testing.T) {
     db, _ := connectMysql()
-    var arr []RoomMsg
-    db.Table(RoomMsgTableName("sss")).
-        Where("room_id=?", "sss").
-        Order("id desc").
-        Limit(3).Find(&arr)
+    arr, _ := FindRoomMsgLast(db, "sss", 3)
     fmt.Println(arr)
 
-    data := &RoomMsg{RoomId:"sss", Uid:123, Content:"dsdfsfdfsdfds"}
-    res := InsertRoomMsg(db, "sss", data)
+    data := &RoomMsg{RoomId:"sss", Uid:123, Content:"dsdfsfdfsdfds", CT: time.Now().Unix()}
+    res := db.Table("room_msg").Create(data)
+    //res := InsertRoomMsg(db, "sss", data)
     fmt.Println(res.Error)
     //for _, row := range arr{
     //    fmt.Println(row)

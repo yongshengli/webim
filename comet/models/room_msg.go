@@ -12,7 +12,7 @@ type RoomMsg struct {
     RoomId  string
     Uid     int
     Content string
-    CT      int `gorm:"column:c_t"`
+    CT      int64 `gorm:"column:c_t"`
 }
 
 func RoomMsgTableName(roomId string) string {
@@ -23,11 +23,13 @@ func (rm *RoomMsg) GetTableName(roomId string) string {
     return RoomMsgTableName(rm.RoomId)
 }
 
-func FindRoomMsgLast(db *gorm.DB, roomId string, limit int) (total int64, arr []RoomMsg, err error) {
-    db.Table(RoomMsgTableName(roomId)).
+func FindRoomMsgLast(db *gorm.DB, roomId string, limit int) (arr []RoomMsg, err error) {
+    //arr = []RoomMsg{}
+    res := db.Table(RoomMsgTableName(roomId)).
         Where("room_id=?", roomId).
         Order("id desc").
-        Limit(limit)
+        Limit(limit).Find(&arr)
+    err = res.Error
     if err!=nil{
         return
     }
