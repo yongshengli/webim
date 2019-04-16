@@ -77,7 +77,7 @@ func GetRoom(id string) (*Room, error){
 		return nil, err
 	}
 	ttl, err := common.RedisClient.Ttl(roomKey(id))
-	if err != nil{
+	if err != nil {
 		logs.Error("msg[获取room redis data ttl err] err[%s]", err.Error())
 	}
 	if ttl < 3600*3 {
