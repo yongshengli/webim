@@ -39,12 +39,15 @@ func getDeviceTokenInfo(deviceToken string) (map[string]string, error) {
         return nil, err
     }
     tmpRes := replay.([]interface{})
+    if tmpRes[0] == nil {
+        return nil, nil
+    }
     err = json.Unmarshal(tmpRes[0].([]byte), &res)
     if err != nil {
         logs.Error("msg[解析json失败] method[getDeviceTokenInfo] err[%s]", err.Error())
         return nil, err
     }
-    ttl := tmpRes[1].(int)
+    ttl := tmpRes[1].(int64)
     if ttl < 3600 {
         _, err = common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME)
         if err != nil {
