@@ -22,7 +22,10 @@ func TestRoomMsgInsert(t *testing.T){
 }
 
 func TestRoomMsgTableName(t *testing.T) {
-    fmt.Println(RoomMsgTableName("0"))
+    tableName := RoomMsgTableName("0")
+    if tableName != "room_msg_802" {
+        t.Errorf("table name err, except room_msg_802 but get %s", tableName)
+    }
 }
 
 func TestFindRoomMsgLast(t *testing.T) {
