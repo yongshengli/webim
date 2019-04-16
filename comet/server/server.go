@@ -2,10 +2,7 @@ package server
 
 import (
     "github.com/astaxie/beego"
-    "webim/comet/common"
-    "github.com/gomodule/redigo/redis"
     "errors"
-    "encoding/json"
     "net/rpc/jsonrpc"
     "time"
     "github.com/astaxie/beego/logs"
@@ -151,7 +148,7 @@ func Count() Monitor {
  * 根据deviceToken找到用户对应的主机然后推送给用户
  */
 func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
-    user, err := getDeviceTokenInfoByDeviceToken(deviceToken)
+    user, err := getDeviceTokenInfo(deviceToken)
     if user == nil {
         return false, err
     }
@@ -223,56 +220,4 @@ func (s *server) BroadcastSelf(msg Msg) (bool, error) {
     }
 
     return true, nil
-}
-
-func delDeviceTokenInfo(deviceToken string) (int, error) {
-    logs.Debug("msg[call_delDeviceTokenInfo] device_toke[%s]", deviceToken)
-    return common.RedisClient.Del([]string{deviceTokenKey(deviceToken)})
-}
-func saveDeviceTokenInfo(user *User) (string, error) {
-    if len(user.DeviceToken) < 1 {
-        return "", errors.New("DeviceToken为空")
-    }
-    jsonStr, err := json.Marshal(user)
-    if err != nil {
-        beego.Error(err)
-        return "", err
-    }
-    return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, SESSION_LIVE_TIME)
-}
-func getDeviceTokenByUid(uid string) (string, error) {
-    return redis.String(common.RedisClient.Get(uidKey(uid)))
-}
-
-func getDeviceTokenInfoByDeviceToken(deviceToken string) (map[string]string, error) {
-    var res map[string]string
-    tokenKey := deviceTokenKey(deviceToken)
-    replay, err := common.RedisClient.Multi(func (conn redis.Conn){
-        conn.Send("GET", tokenKey)
-        conn.Send("TTL", tokenKey)
-    })
-    if replay == nil {
-        return nil, err
-    }
-    tmpRes := replay.([]interface{})
-    err = json.Unmarshal(tmpRes[0].([]byte), &res)
-    if err != nil {
-        logs.Error("msg[解析json失败] method[getDeviceTokenInfoByDeviceToken] err[%s]", err.Error())
-        return nil, err
-    }
-    ttl := tmpRes[1].(int)
-    if ttl < 3600 {
-        _, err = common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME)
-        if err != nil {
-            logs.Error("msg[延长session有效期失败] err[%s]", err.Error())
-        }
-    }
-    return res, nil
-}
-func deviceTokenKey(deviceToken string) string {
-    return "comet:token:" + deviceToken
-}
-
-func uidKey(uid string) string {
-    return "comet:uid:" + uid
 }
