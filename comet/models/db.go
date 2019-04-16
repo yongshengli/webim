@@ -22,7 +22,7 @@ func ConnectMysql(user, pass, dbName string) error {
     return nil
 }
 
-func ConnectTestMysql() (*gorm.DB, error){
+func ConnectTestMysql() error {
     err := ConnectMysql("root", "123456", "chat")
-    return db, err
+    return err
 }
