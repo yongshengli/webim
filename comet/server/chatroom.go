@@ -208,6 +208,13 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
     }
     msg.Data = string(jsonByte)
     msg.Type = TYPE_ROOM_MSG
+
+    _, err = SaveRoomMsg(r.Id, msg)
+
+    if err!=nil {
+        logs.Error("msg[room msg 写入数据库失败]")
+    }
+
     beego.Debug("msg[room broadcast]")
     users, err := r.Users()
     if err != nil {

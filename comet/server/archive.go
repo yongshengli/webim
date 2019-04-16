@@ -191,7 +191,23 @@ func (j *JobWorker) roomMsg() {
         j.Rsp.Data = string(resByte)
         j.s.Send(&j.Rsp)
     } else {
-        room.Broadcast(&j.Req)
+        j.Rsp = j.Req
+        var tmpData map[string]interface{}
+        if err = common.DeJson([]byte(j.Req.Data), &tmpData);err !=nil{
+            logs.Error("msg[roomMsg DeJson err] err[%s]", err.Error())
+            return
+        }
+        tmpData["uid"] = j.s.User.Id
+        tmpData["room_id"] = room.Id
+        if TmpRspData, err := common.EnJson(tmpData); err==nil{
+            j.Rsp.Data = string(TmpRspData)
+            room.Broadcast(&j.Req)
+        }else{
+            logs.Error("msg[roomMsg EnJson err] err[%s]", err)
+            return
+        }
+
+
     }
 }
 func (j *JobWorker) createRoom() {
