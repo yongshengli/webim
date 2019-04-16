@@ -8,6 +8,7 @@ import (
 	"errors"
 	"time"
 	"github.com/astaxie/beego/logs"
+	"reflect"
 )
 
 type RUser struct {
@@ -24,23 +25,38 @@ func NewRoom(id string, name string) (*Room, error){
 	room := &Room{Id:id, Name:name}
 	roomJson, err := json.Marshal(room)
 	if err != nil {
-		beego.Error(err)
+		logs.Error("msg[room struct json encode err] err[%s]", err)
 		return nil, err
 	}
-	//fmt.Println(string(roomJson))
-	common.RedisClient.Multi(func(conn redis.Conn){
-		conn.Send("SETEX", roomKey(id), time.Hour*24*7/time.Second, roomJson)
-		conn.Send("zadd", roomZsetKey(), time.Now().Unix(), id)
+	res, err := common.RedisClient.Multi(func(conn redis.Conn){
+		conn.Send("SETEX", roomKey(id), int(time.Hour*24*7/time.Second), roomJson)
+		conn.Send("ZADD", roomZsetKey(), time.Now().Unix(), id)
 	})
+	//fmt.Println(res)
+	if err != nil {
+		logs.Error("msg[新建Room失败] err[%s] result[%s]", err, res)
+		return nil, err
+	}
 	return room, nil
 }
 
-func RoomList(start, stop int) (reply interface{}, err error) {
-	return common.RedisClient.Do("ZREVRANGE", roomZsetKey(), start, stop, "WITHSCORES")
+func RoomList(start, stop int) (map[string]string, error) {
+	res, err := common.RedisClient.Do("ZREVRANGE", roomZsetKey(), start, stop, "WITHSCORES")
+	if err!= nil{
+		return nil, err
+	}
+	if reflect.ValueOf(res).Kind() == reflect.Slice {
+		result, err := redis.StringMap(res, err)
+		if err !=nil{
+			return nil, err
+		}
+		return result, nil
+	}
+	return nil, errors.New("redis 返回的数据结构错误")
 }
 
-func TotalRoom() (reply interface{}, err error){
-	return common.RedisClient.Do("zcount", "-", "+")
+func TotalRoom() (num int, err error){
+	return redis.Int(common.RedisClient.Do("ZCARD", roomZsetKey()))
 }
 
 func GetRoom(id string) (*Room, error){
@@ -59,8 +75,16 @@ func GetRoom(id string) (*Room, error){
 	return &room, nil
 }
 func DelRoom(id string) (int, error){
-	common.RedisClient.Del([]string{roomUserKey(id)})
-	return common.RedisClient.Del([]string{roomKey(id)})
+	res, err := common.RedisClient.Multi(func(conn redis.Conn){
+		conn.Send("DEL", roomUserKey(id))
+		conn.Send("DEL", roomKey(id))
+		conn.Send("ZREM", roomZsetKey(), id)
+	})
+	if err!= nil{
+		return 0, err
+	}
+	result := res.([]interface{})
+	return redis.Int(result[1], nil)
 }
 
 func roomKey(id string) string{

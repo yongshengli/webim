@@ -33,11 +33,25 @@ func TestNewRoom(t *testing.T) {
     if len(users)<1{
         t.Error("用户进入房间失败")
     }
+    roomArr, err := RoomList(0, -1)
+    if err!= nil {
+        t.Error(err)
+    }
+    if len(roomArr)<1{
+        t.Error("room zset 中没有数据")
+    }
+    roomNum, err :=TotalRoom()
+    if err != nil {
+        t.Error(err)
+    }
+    if roomNum <1 {
+        t.Error("房间数错误")
+    }
     res, err :=  DelRoom(roomId)
     if err!=nil{
-       t.Error(err)
+     t.Error(err)
     }
     if res<1{
-       t.Error("删除聊天室失败")
+     t.Error("删除聊天室失败")
     }
 }
