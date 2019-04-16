@@ -138,6 +138,14 @@ func (r *redisClient) Do(commandName string, args ...interface{}) (reply interfa
     return conn.Do(commandName, args...)
 }
 
+func (r *redisClient) Multi(callback func(conn redis.Conn)) (reply interface{}, err error) {
+    conn := r.pool.Get()
+    defer conn.Close()
+    conn.Send("MULTI")
+    callback(conn)
+    return conn.Do("EXEC")
+}
+
 func RedisInit(conf map[string]string) {
     if RedisClient.done {
         return

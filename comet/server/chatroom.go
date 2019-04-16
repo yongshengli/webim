@@ -28,8 +28,19 @@ func NewRoom(id string, name string) (*Room, error){
 		return nil, err
 	}
 	//fmt.Println(string(roomJson))
-	common.RedisClient.Set(roomKey(id), roomJson, time.Hour*24*7)
+	common.RedisClient.Multi(func(conn redis.Conn){
+		conn.Send("SETEX", roomKey(id), time.Hour*24*7/time.Second, roomJson)
+		conn.Send("zadd", roomZsetKey(), time.Now().Unix(), id)
+	})
 	return room, nil
+}
+
+func RoomList(start, stop int) (reply interface{}, err error) {
+	return common.RedisClient.Do("ZREVRANGE", roomZsetKey(), start, stop, "WITHSCORES")
+}
+
+func TotalRoom() (reply interface{}, err error){
+	return common.RedisClient.Do("zcount", "-", "+")
 }
 
 func GetRoom(id string) (*Room, error){
@@ -55,7 +66,9 @@ func DelRoom(id string) (int, error){
 func roomKey(id string) string{
 	return "comet:room:"+id
 }
-
+func roomZsetKey() string{
+	return "comet:room_zset"
+}
 func roomUserKey(roomId string) string{
 	return "comet:roomUserList:"+roomId
 }
