@@ -22,8 +22,8 @@ func RoomMsgTableName(roomId string) string {
 func (rm *RoomMsg) GetTableName(roomId string) string {
     return RoomMsgTableName(rm.RoomId)
 }
-
-func FindRoomMsgLast(db *gorm.DB, roomId string, limit int) (arr []RoomMsg, err error) {
+//获取最新的几条聊天室聊天记录
+func FindRoomMsgLast(roomId string, limit int) (arr []RoomMsg, err error) {
     //arr = []RoomMsg{}
     res := db.Table(RoomMsgTableName(roomId)).
         Where("room_id=?", roomId).
@@ -36,7 +36,7 @@ func FindRoomMsgLast(db *gorm.DB, roomId string, limit int) (arr []RoomMsg, err 
     return
 }
 
-func InsertRoomMsg(db *gorm.DB, roomId string, data *RoomMsg) *gorm.DB{
+func InsertRoomMsg(roomId string, data *RoomMsg) *gorm.DB{
     return db.Table(RoomMsgTableName(roomId)).Create(data)
 
 }

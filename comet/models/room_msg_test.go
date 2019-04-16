@@ -9,17 +9,6 @@ import (
     "time"
 )
 
-func connectMysql() (*gorm.DB, error){
-    // set default database
-    db, err :=gorm.Open("mysql", "mysql", "root:123456@/chat?charset=utf8")
-    if err!=nil{
-        fmt.Println(err)
-        return nil, err
-    }
-    db.DB().SetMaxIdleConns(10)
-    return db, nil
-
-}
 func TestRoomMsgInsert(t *testing.T){
 
     connectMysql()
