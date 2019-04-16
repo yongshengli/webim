@@ -15,7 +15,10 @@ func TestRoomMsgInsert(t *testing.T){
     if res.RowsAffected < 1 {
         t.Error("插入失败")
     }
-    fmt.Println(res)
+    if db.NewRecord(roomMsg) {
+        t.Error("插入返回的主键为空")
+    }
+    fmt.Println(roomMsg.Id)
 }
 
 func TestRoomMsgTableName(t *testing.T) {

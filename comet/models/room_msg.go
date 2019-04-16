@@ -4,6 +4,7 @@ import (
     "github.com/dgryski/go-farm"
     "fmt"
     "github.com/jinzhu/gorm"
+    "time"
 )
 const ROOM_MSG_NUM = 1024
 
@@ -36,7 +37,13 @@ func FindRoomMsgLast(roomId string, limit int) (arr []RoomMsg, err error) {
     return
 }
 
+//写入一条聊天数据数据
 func InsertRoomMsg(roomId string, data *RoomMsg) *gorm.DB{
+    if db.NewRecord(data) == false {
+        return nil
+    }
+    if data.CT < 1 {
+        data.CT = time.Now().Unix()
+    }
     return db.Table(RoomMsgTableName(roomId)).Create(data)
-
 }
