@@ -65,8 +65,8 @@ func (s *Session) Run() {
     s.read()
 }
 func (s *Session) start() {
-    ci, err := beego.AppConfig.Int64("heartbeat.interval")
     var interval time.Duration
+    ci, err := beego.AppConfig.Int64("heartbeat.interval")
     if err != nil {
         interval = time.Minute * 4
     } else {

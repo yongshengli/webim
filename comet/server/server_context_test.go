@@ -13,8 +13,8 @@ func TestServerRegister(t *testing.T) {
     }
     common.RedisInitTest()
     context := new(Context)
-    _, err := context.Register(server.Host, server)
-    if err!=nil{
+
+    if _, err := context.Register(server.Host, server); err!=nil{
         t.Error(err)
     }
     //fmt.Println(res)
