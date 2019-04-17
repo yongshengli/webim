@@ -113,7 +113,7 @@ func (j *JobWorker) createRoom() {
 func (j *JobWorker) getRoom(data *map[string]interface{}) *Room{
     var err error
     *data, err = j.decode(j.Req.Data)
-    if err!= nil{
+    if err != nil {
         logs.Error("msg[leaveRoom decode err] err[%s]", err.Error())
         return nil
     }
