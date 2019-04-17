@@ -174,8 +174,8 @@ func (r *Room) Leave(s *Session) (bool, error) {
     if len(s.DeviceToken) < 1 {
         return false, errors.New("session.DeviceToken为空")
     }
-    _, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), s.DeviceToken)
-    if err != nil {
+
+    if _, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), s.DeviceToken); err != nil {
         return false, err
     }
     s.RoomId = ""
@@ -211,9 +211,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
     msg.Data = string(jsonByte)
     msg.Type = TYPE_ROOM_MSG
 
-    _, err = SaveRoomMsg(r.Id, msg)
-
-    if err!=nil {
+    if _, err = SaveRoomMsg(r.Id, msg); err != nil {
         logs.Error("msg[room msg 写入数据库失败]")
     }
 
@@ -234,8 +232,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
 
 func SaveRoomMsg(roomId string, msg *Msg) (uint64, error){
     var msgData map[string]interface{}
-    err := common.DeJson([]byte(msg.Data), &msgData)
-    if err != nil {
+    if err := common.DeJson([]byte(msg.Data), &msgData); err != nil {
         logs.Error("msg[SaveRoomMsg DeJson err] err[%s]", err.Error())
         return 0, err
     }
