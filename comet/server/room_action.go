@@ -1,87 +1,10 @@
 package server
 
 import (
-    "webim/comet/common"
-    "github.com/satori/go.uuid"
-    "time"
     "github.com/astaxie/beego/logs"
-    "github.com/astaxie/beego"
+    "webim/comet/common"
 )
 
-type IWorker interface {
-    Do()
-    Log()
-}
-type JobWorker struct {
-    *Job
-    s *Session
-}
-func NewJobWork(msg Msg, s *Session) *JobWorker {
-    job := &Job{
-        TraceID: uuid.NewV4().String(),
-        ReqTime: time.Now().Unix(),
-        Req:     msg,
-    }
-    job.Rsp.DeviceToken = s.DeviceToken
-    job.Rsp.Version = job.Req.Version
-    job.Rsp.ReqId = job.Req.ReqId
-    return &JobWorker{job, s}
-}
-/**
- * 记录日志
- */
-func (j *JobWorker) Log(){
-    reqJson, _ := common.EnJson(j.Req)
-    rspJson, _ := common.EnJson(j.Rsp)
-    logs.Info("req:%s, rsp:%s", string(reqJson), string(rspJson))
-}
-func (j *JobWorker) Do() {
-    defer j.Log()
-
-    switch j.Req.Type {
-    case TYPE_CREATE_ROOM:
-        j.createRoom()
-    case TYPE_ROOM_MSG:
-        j.roomMsg()
-    case TYPE_JOIN_ROOM:
-        j.joinRoom()
-    case TYPE_LEAVE_ROOM:
-        j.leaveRoom()
-    case TYPE_REGISTER:
-        j.register()
-    }
-}
-
-func (j *JobWorker) register() {
-    data, err := j.decode(j.Req.Data)
-    if err!= nil{
-        logs.Error("msg[register decode err] err[%s]", err.Error())
-        return
-    }
-    if _, ok := data["device_id"]; !ok {
-        return
-    }
-    appKey := beego.AppConfig.String("appkey")
-    deviceId := data["device_id"].(string)
-    deviceToken := common.GenerateDeviceToken(deviceId, appKey)
-    j.s.DeviceToken = deviceToken
-    j.s.User.DeviceId = deviceId
-    if j.s.User.Name == "" {
-        j.s.User.Name = deviceId
-    }
-    //保存token session信息到redis中
-    j.s.Server.AddSession(j.s)
-    j.Rsp.Type = TYPE_REGISTER
-    j.Rsp.DeviceToken = deviceToken
-    resData := map[string]interface{}{"code": 0, "device_token": deviceToken}
-    resByte, err := common.EnJson(resData)
-    if err != nil {
-        logs.Error("msg[register encode err] err[%s]", err.Error())
-        return
-    }
-    j.Rsp.Data = string(resByte)
-    j.s.Send(&j.Rsp)
-}
 func (j *JobWorker) leaveRoom() {
     data, err := j.decode(j.Req.Data)
     if err!= nil{
@@ -243,13 +166,4 @@ func (j *JobWorker) createRoom() {
     }
     j.Rsp.Data = string(resByte)
     j.s.Send(&j.Rsp)
-}
-
-func (j *JobWorker) decode(jsonStr string) (map[string]interface{}, error) {
-    data := map[string]interface{}{}
-    err := common.DeJson([]byte(jsonStr), &data)
-    if err!=nil{
-        return nil, err
-    }
-    return data, err
 }
