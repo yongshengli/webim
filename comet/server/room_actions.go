@@ -124,10 +124,10 @@ func (j *JobWorker) sendLastChatToCurrentUser(room *Room) error {
         return err
     }
     sortMsgArr := make([]models.RoomMsg, len(msgArr))
-    j := 0
+    jj := 0
     for i:=len(msgArr)-1; i>0; i++ {
-        sortMsgArr[j] = msgArr[i]
-        j++
+        sortMsgArr[jj] = msgArr[i]
+        jj++
     }
     rspData := map[string]interface{}{}
     rspData["room_id"] = room.Id
