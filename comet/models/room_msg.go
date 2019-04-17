@@ -9,11 +9,11 @@ import (
 const ROOM_MSG_NUM = 1024
 
 type RoomMsg struct {
-    Id      uint64 `gorm:"primary_key"`
-    RoomId  string
-    Uid     int64
-    Content string
-    CT      int64 `gorm:"column:c_t"`
+    Id      uint64 `json:"id" gorm:"primary_key"`
+    RoomId  string `json:"room_id"`
+    Uid     int64  `json:"uid"`
+    Content string `json:"content"`
+    CT      int64  `json:"c_t" gorm:"column:c_t"`
 }
 
 func RoomMsgTableName(roomId string) string {

@@ -48,6 +48,7 @@ func (j *JobWorker) joinRoom() {
 
         rspData := make(map[string]interface{})
         rspData["code"] = 1
+        rspData["room_id"] = room.Id
         rspData["content"] = j.s.User.Name + "进入房间"
         resByte, err := common.EnJson(rspData)
         if err != nil {
@@ -103,6 +104,7 @@ func (j *JobWorker) createRoom() {
     }
     rspData := make(map[string]interface{})
     rspData["code"] = 0
+    rspData["room_id"] = room.Id
     rspData["content"] = "创建房间成功"
     j.Rsp.Type = TYPE_CREATE_ROOM
     resByte, err := common.EnJson(rspData)
@@ -111,7 +113,7 @@ func (j *JobWorker) createRoom() {
         return
     }
     j.Rsp.Data = string(resByte)
-    j.s.Send(&j.Rsp)
+    //j.s.Send(&j.Rsp)
 
     //发送历史聊天记录
     j.sendLastChatToCurrentUser(room)
@@ -125,20 +127,25 @@ func (j *JobWorker) sendLastChatToCurrentUser(room *Room) error {
     }
     sortMsgArr := make([]models.RoomMsg, len(msgArr))
     jj := 0
-    for i:=len(msgArr)-1; i>0; i++ {
+    for i:=len(msgArr)-1; i>0; i-- {
         sortMsgArr[jj] = msgArr[i]
         jj++
     }
     rspData := map[string]interface{}{}
-    rspData["room_id"] = room.Id
-    rspData["chat_history"] = sortMsgArr
+
+    if err = common.DeJson([]byte(j.Rsp.Data), &rspData); err !=nil {
+        logs.Error("msg[sendLastChatToCurrentUser json decode err] err[%s]", err.Error())
+        return err
+    }
     msgArr = nil
+    rspData["chat_history"] = sortMsgArr
     tmpByte, err := common.EnJson(rspData)
     if err != nil {
         logs.Error("msg[sendLastChatToCurrentUser json encode err] err[%s]", err.Error())
         return err
     }
     j.Rsp.Data = string(tmpByte)
+    j.s.Send(&j.Rsp)
     return nil
 }
 

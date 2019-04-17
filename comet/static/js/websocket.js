@@ -11,7 +11,6 @@ $(document).ready(function () {
     // Message received on the socket
     socket.onmessage = function (event) {
         var data = JSON.parse(event.data);
-        var li = document.createElement('li');
         if (data.data!="") {
             data.data = JSON.parse(data.data)
         }
@@ -27,8 +26,8 @@ $(document).ready(function () {
                 break;
             case 11:
                 alert("device_token:" + data['data']['device_token'])
-                var data = {"type":4,"data": JSON.stringify({"room_id":"1"})}
-                socket.send(JSON.stringify(data))
+                var tMsg = {"type":4,"data": JSON.stringify({"room_id":"1"})}
+                socket.send(JSON.stringify(tMsg))
                 break;
             case 2: // JOIN
                 alert("加入房间")
@@ -43,6 +42,7 @@ $(document).ready(function () {
                 li.innerText = data.User + ' left the chat room.';
                 break;
             case 1: // MESSAGE
+                var li = document.createElement('li');
                 var username = document.createElement('strong');
                 var content = document.createElement('span');
                 if (data['sid']) {
@@ -57,7 +57,7 @@ $(document).ready(function () {
                 $('#chatbox li').first().before(li);
                 break;
             case 99:
-                var data = {
+                var tMsg = {
                     "type": 100,
                     "data": JSON.stringify({
                         "sid": sid,
@@ -65,7 +65,26 @@ $(document).ready(function () {
                         "content": ""
                     })
                 }
-                socket.send(JSON.stringify(data));
+                socket.send(JSON.stringify(tMsg));
+            case 4:
+                if (typeof data.data["chat_history"]!="undefined"){
+                    for (var i=0; i<data.data["chat_history"].length; i++){
+                        var li = document.createElement('li');
+                        var content = document.createElement('span');
+                        var username = document.createElement('strong');
+
+                        if (data['sid']) {
+                            sid = data['sid']
+                        }
+                        username.innerText = data.data["chat_history"][i]['uname'] || "匿名用户";
+                        content.innerText = data.data["chat_history"][i]['content'];
+
+                        li.appendChild(username);
+                        li.appendChild(document.createTextNode(': '));
+                        li.appendChild(content);
+                        $('#chatbox li').first().before(li);
+                    }
+                }
         }
     };
 
@@ -76,7 +95,7 @@ $(document).ready(function () {
             alert("发送的内容不能为空")
             return
         }
-        var data = {
+        var tmpMsg = {
             "type": 1,
             "data": JSON.stringify({
                 "room_id": "1",
@@ -85,7 +104,7 @@ $(document).ready(function () {
                 "content": $('#sendbox').val()
             })
         }
-        socket.send(JSON.stringify(data));
+        socket.send(JSON.stringify(tmpMsg));
         $('#sendbox').val('');
     }
 

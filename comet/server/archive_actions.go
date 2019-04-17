@@ -21,6 +21,7 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
         ReqTime: time.Now().Unix(),
         Req:     msg,
     }
+    job.Rsp.Encode = "utf-8"
     job.Rsp.DeviceToken = s.DeviceToken
     job.Rsp.Version = "1.0"
     job.Rsp.ReqId = job.Req.ReqId
