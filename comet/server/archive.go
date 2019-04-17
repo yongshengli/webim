@@ -201,13 +201,11 @@ func (j *JobWorker) roomMsg() {
         tmpData["room_id"] = room.Id
         if TmpRspData, err := common.EnJson(tmpData); err==nil{
             j.Rsp.Data = string(TmpRspData)
-            room.Broadcast(&j.Req)
+            room.Broadcast(&j.Rsp)
         }else{
             logs.Error("msg[roomMsg EnJson err] err[%s]", err)
             return
         }
-
-
     }
 }
 func (j *JobWorker) createRoom() {

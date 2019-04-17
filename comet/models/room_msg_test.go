@@ -38,6 +38,9 @@ func TestFindRoomMsgLast(t *testing.T) {
 
     data := &RoomMsg{RoomId:"sss", Uid:123, Content:"dsdfsfdfsdfds", CT: time.Now().Unix()}
     res := db.Table("room_msg").Create(data)
+    if res.Error != nil {
+        t.Error(res.Error)
+    }
     //res := InsertRoomMsg(db, "sss", data)
-    fmt.Println(res.Error)
+    //fmt.Println(res.Error)
 }

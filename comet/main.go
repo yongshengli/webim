@@ -6,6 +6,7 @@ import (
 	"webim/comet/controllers"
 	"webim/comet/common"
 	"webim/comet/server"
+	"webim/comet/models"
 )
 
 func main() {
@@ -27,7 +28,13 @@ func main() {
 		"host": beego.AppConfig.String("redis.host"),
 		"port": beego.AppConfig.String("redis.port"),
 	})
-
+	models.ConnectMysql(
+		beego.AppConfig.String("mysql.host"),
+		beego.AppConfig.String("mysql.port"),
+		beego.AppConfig.String("mysql.user"),
+		beego.AppConfig.String("mysql.pass"),
+		beego.AppConfig.String("mysql.db"),
+	)
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)
 
