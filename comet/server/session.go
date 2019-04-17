@@ -8,6 +8,7 @@ import (
     "strings"
     "webim/comet/common"
     "encoding/json"
+    "github.com/astaxie/beego/logs"
 )
 
 type User struct {
@@ -36,11 +37,8 @@ type Session struct {
 }
 
 func NewSession(conn *websocket.Conn, s *server) *Session {
-    if s.Host == ""{
-        s.Host = common.GetLocalIp()
-    }
     u := &User{
-        Id:     "",
+        Id:     "0",
         Name:   "匿名用户",
         IP:     s.Host,
         RealIP: conn.RemoteAddr().String(),
@@ -84,8 +82,8 @@ func (s *Session) start() {
 
         case req := <-s.reqChan:
             s.do(req)
-        case rep := <-s.rspChan:
-            s.write(rep)
+        case rsp := <-s.rspChan:
+            s.write(rsp)
         case <- s.stopChan:
             s.Close()
             return
@@ -93,7 +91,7 @@ func (s *Session) start() {
     }
 }
 func (s *Session) Send(msg *Msg) {
-    beego.Debug("session send call")
+    beego.Debug("msg[session send call]")
     s.rspChan <- msg
 }
 
@@ -120,7 +118,7 @@ func (s *Session) write(msg *Msg) error {
 
     data, err := common.EnJson(msg)
     if err != nil {
-        beego.Error("Fail to marshal event:", err)
+        logs.Error("msg[Fail to marshal event] err[%s]", err)
         return err
     }
     err = s.Conn.WriteMessage(websocket.TextMessage, data)
@@ -131,7 +129,7 @@ func (s *Session) write(msg *Msg) error {
         }
         // 网络已经被关闭的情况下,设置Session关闭
         if err == io.EOF || err != nil && strings.Contains(err.Error(), "use of closed network connection") {
-            beego.Info("msg[network_has_closed_than_set_session_close] sessionIp[%s] user[%v]", s.Conn.RemoteAddr(), s.User)
+            logs.Info("msg[network_has_closed_than_set_session_close] sessionIp[%s] user[%v]", s.Conn.RemoteAddr(), s.User)
             s.sendFailCount = 9999
             s.Close()
         }
@@ -164,12 +162,12 @@ func (s *Session) do(msg *Msg) {
 func (s *Session) read() {
     for {
         if s.stopChan == nil {
-            beego.Info("msg[stop_read_client_data] user[%v]", s.User)
+            logs.Info("msg[stop_read_client_data] user[%v]", s.User)
             break
         }
         _, p, err := s.Conn.ReadMessage()
         if err != nil && err == io.EOF {
-            beego.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
+            logs.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
             s.Close()
             break
         }

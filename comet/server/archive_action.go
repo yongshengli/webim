@@ -35,6 +35,11 @@ func (j *JobWorker) Log(){
     logs.Info("trace_id[%s] req[%s] rsp[%s] req_time[%s] rsp_time[%s]", j.TraceID, string(reqJson), string(rspJson), j.ReqTime, j.RspTime)
 }
 func (j *JobWorker) Do() {
+    defer func(){
+        if r := recover(); r != nil{
+            logs.Error("msg[runtime err] err[%v]", r)
+        }
+    }()
     defer j.Log()
 
     switch j.Req.Type {
@@ -60,12 +65,27 @@ func (j *JobWorker) Do() {
 
 func (j *JobWorker) decode(jsonStr string) (map[string]interface{}, error) {
     data := map[string]interface{}{}
-    err := common.DeJson([]byte(jsonStr), &data)
-    if err!=nil{
+    if err := common.DeJson([]byte(jsonStr), &data);err!=nil{
         return nil, err
     }
-    return data, err
+    return data, nil
 }
 func (j *JobWorker) transpond(){
-
+    j.TransferReqTime = time.Now().Unix()
+    data, err := j.decode(j.Req.Data)
+    if err !=nil {
+        logs.Error("msg[transpond json decode err] err[%s]", err.Error())
+        return
+    }
+    if _, ok := data["url"]; !ok{
+        rspData := map[string]interface{}{"code":1, "content":"url字段不能为空"}
+        byteData, err := common.EnJson(rspData)
+        if err !=nil {
+            return
+        }
+        j.Rsp.Data = string(byteData)
+        j.s.Send(&j.Rsp)
+        return
+    }
+    j.TransferRspTime = time.Now().Unix()
 }

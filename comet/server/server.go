@@ -48,10 +48,13 @@ func newServer(host, port string, slotContainerLen, slotLen int) *server {
 }
 
 func Run(host, port string, slotContainerLen, slotLen int){
+    if host =="" || port == "" {
+        panic("host:port不能为空")
+    }
     Server = newServer(host, port, slotContainerLen, slotLen)
     go Server.ReportLive()
     go RunRpcService(Server)
-    beego.Debug("server start...")
+    logs.Debug("msg[server start...]")
 }
 
 func (s *server) ReportLive(){
@@ -97,7 +100,7 @@ func (s *server) AddSession(ss *Session) bool {
     //把session 信息保存到redis
     _, err := saveDeviceTokenInfo(ss.User)
     if err != nil {
-        beego.Error(err)
+        logs.Error("msg[AddSession err] err[%s]", err.Error())
         return false
     }
     s.getSlot(ss.DeviceToken).Add(ss.DeviceToken, ss)
