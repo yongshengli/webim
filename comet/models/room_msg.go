@@ -12,6 +12,7 @@ type RoomMsg struct {
     Id      uint64 `json:"id" gorm:"primary_key"`
     RoomId  string `json:"room_id"`
     Uid     int64  `json:"uid"`
+    Uname   string  `json:"uname"`
     Content string `json:"content"`
     CT      int64  `json:"c_t" gorm:"column:c_t"`
 }
