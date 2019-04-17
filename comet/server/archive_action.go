@@ -22,7 +22,7 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
         Req:     msg,
     }
     job.Rsp.DeviceToken = s.DeviceToken
-    job.Rsp.Version = job.Req.Version
+    job.Rsp.Version = "1.0"
     job.Rsp.ReqId = job.Req.ReqId
     return &JobWorker{job, s}
 }
@@ -32,7 +32,7 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
 func (j *JobWorker) Log(){
     reqJson, _ := common.EnJson(j.Req)
     rspJson, _ := common.EnJson(j.Rsp)
-    logs.Info("req:%s, rsp:%s", string(reqJson), string(rspJson))
+    logs.Info("trace_id[%s] req[%s] rsp[%s]", j.TraceID, string(reqJson), string(rspJson))
 }
 func (j *JobWorker) Do() {
     defer j.Log()

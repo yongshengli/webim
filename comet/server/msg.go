@@ -8,7 +8,7 @@ import (
 
 
 type Job struct {
-	TraceID string // 日志ID
+	TraceID string // 跟踪ID
 
 	ReqTime int64 // 请求到达时间
 	RspTime int64 // 响应结束时间
