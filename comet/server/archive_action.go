@@ -32,7 +32,7 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
 func (j *JobWorker) Log(){
     reqJson, _ := common.EnJson(j.Req)
     rspJson, _ := common.EnJson(j.Rsp)
-    logs.Info("trace_id[%s] req[%s] rsp[%s]", j.TraceID, string(reqJson), string(rspJson))
+    logs.Info("trace_id[%s] req[%s] rsp[%s] req_time[%s] rsp_time[%s]", j.TraceID, string(reqJson), string(rspJson), j.ReqTime, j.RspTime)
 }
 func (j *JobWorker) Do() {
     defer j.Log()
@@ -55,6 +55,7 @@ func (j *JobWorker) Do() {
     case TYPE_TRANSPOND:
         j.transpond()
     }
+    j.RspTime = time.Now().Unix()
 }
 
 func (j *JobWorker) decode(jsonStr string) (map[string]interface{}, error) {
