@@ -3,6 +3,7 @@ package models
 import (
     "github.com/jinzhu/gorm"
     "github.com/astaxie/beego/logs"
+    _ "github.com/go-sql-driver/mysql" // import your used driver
     "fmt"
 )
 

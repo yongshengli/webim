@@ -3,7 +3,6 @@ package models
 import (
     "testing"
     "fmt"
-    _ "github.com/go-sql-driver/mysql" // import your used driver
     "time"
 )
 
@@ -33,10 +32,10 @@ func TestFindRoomMsgLast(t *testing.T) {
     if err!=nil {
         t.Error(err)
     }
-    arr, _ := FindRoomMsgLast("sss", 3)
+    arr, _ := FindRoomMsgLast("1", 3)
     fmt.Println(arr)
 
-    data := &RoomMsg{RoomId:"sss", Uid:123, Content:"dsdfsfdfsdfds", CT: time.Now().Unix()}
+    data := &RoomMsg{RoomId:"1", Uid:123, Content:"dsdfsfdfsdfds", CT: time.Now().Unix()}
     res := db.Table("room_msg").Create(data)
     if res.Error != nil {
         t.Error(res.Error)

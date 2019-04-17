@@ -28,13 +28,16 @@ func main() {
 		"host": beego.AppConfig.String("redis.host"),
 		"port": beego.AppConfig.String("redis.port"),
 	})
-	models.ConnectMysql(
+	err := models.ConnectMysql(
 		beego.AppConfig.String("mysql.host"),
 		beego.AppConfig.String("mysql.port"),
 		beego.AppConfig.String("mysql.user"),
 		beego.AppConfig.String("mysql.pass"),
 		beego.AppConfig.String("mysql.db"),
 	)
+	if err !=nil {
+	    panic(err)
+    }
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)
 
