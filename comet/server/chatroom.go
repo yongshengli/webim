@@ -147,10 +147,12 @@ func (r *Room) Join(s *Session) (bool, error) {
     }
     s.RoomId = r.Id
     ru := RUser{DeviceToken: s.DeviceToken, User: *s.User, IP: s.IP}
+    //查找当前用户是否已经在聊天室中
     user, err := common.RedisClient.Do("hget", roomUserKey(r.Id), ru.DeviceToken)
     if err != nil {
         return false, err
     }
+    //用户已经在聊天室中直接返回成功
     if user != nil {
         return true, nil
     }
