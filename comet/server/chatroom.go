@@ -246,13 +246,18 @@ func SaveRoomMsg(roomId string, msg *Msg) (uint64, error){
         logs.Error("msg[SaveRoomMsg msg.Data 中不包含uid]")
         return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
     }
+    uname, ok := msgData["uname"]
+    if !ok {
+        logs.Error("msg[SaveRoomMsg msg.Data 中不包含uname]")
+        return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
+    }
     var uidInt int64
     if reflect.ValueOf(uid).Kind() == reflect.String{
         uidInt, _ = strconv.ParseInt(uid.(string), 10, 64)
     }else{
         uidInt = int64(uid.(float64))
     }
-    roomMsg := &models.RoomMsg{RoomId: roomId, Content: content.(string), Uid: uidInt, CT: time.Now().Unix()}
+    roomMsg := &models.RoomMsg{RoomId: roomId, Content: content.(string), Uid: uidInt, Uname:uname.(string), CT: time.Now().Unix()}
     res := models.InsertRoomMsg(roomId, roomMsg)
     return roomMsg.Id, res.Error
 }

@@ -127,7 +127,7 @@ func (j *JobWorker) sendLastChatToCurrentUser(room *Room) error {
     }
     sortMsgArr := make([]models.RoomMsg, len(msgArr))
     jj := 0
-    for i:=len(msgArr)-1; i>0; i-- {
+    for i:=len(msgArr)-1; i>=0; i-- {
         sortMsgArr[jj] = msgArr[i]
         jj++
     }
