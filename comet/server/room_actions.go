@@ -3,6 +3,7 @@ package server
 import (
     "github.com/astaxie/beego/logs"
     "webim/comet/common"
+    "webim/comet/models"
 )
 
 func (j *JobWorker) leaveRoom() {
@@ -39,23 +40,25 @@ func (j *JobWorker) joinRoom() {
         j.Rsp.Data = string(resByte)
         j.s.Send(&j.Rsp)
     } else {
-        res, err := room.Join(j.s)
+        _, err := room.Join(j.s)
         if err != nil {
             logs.Error("msg[%s]", err.Error())
             return
         }
-        if res {
-            rspData := make(map[string]interface{})
-            rspData["code"] = 1
-            rspData["content"] = j.s.User.Name + "进入房间"
-            resByte, err := common.EnJson(rspData)
-            if err != nil {
-                logs.Error("msg[joinRoom encode err] err[%s]", err.Error())
-                return
-            }
-            j.Rsp.Data = string(resByte)
-            room.Broadcast(&j.Rsp)
+
+        rspData := make(map[string]interface{})
+        rspData["code"] = 1
+        rspData["content"] = j.s.User.Name + "进入房间"
+        resByte, err := common.EnJson(rspData)
+        if err != nil {
+            logs.Error("msg[joinRoom encode err] err[%s]", err.Error())
+            return
         }
+        j.Rsp.Data = string(resByte)
+        room.Broadcast(&j.Rsp)
+
+        j.sendLastChatToCurrentUser(room)
+
     }
 }
 func (j *JobWorker) roomMsg() {
@@ -86,6 +89,7 @@ func (j *JobWorker) roomMsg() {
         }
     }
 }
+
 func (j *JobWorker) createRoom() {
     var reqData map[string]interface{}
     room := j.getRoom(&reqData)
@@ -108,6 +112,34 @@ func (j *JobWorker) createRoom() {
     }
     j.Rsp.Data = string(resByte)
     j.s.Send(&j.Rsp)
+
+    //发送历史聊天记录
+    j.sendLastChatToCurrentUser(room)
+}
+
+func (j *JobWorker) sendLastChatToCurrentUser(room *Room) error {
+    msgArr, err := models.FindRoomMsgLast(room.Id, 30)
+    if err != nil {
+        logs.Error("msg[获取聊天室最后30条聊天记录失败] err[%s]", err.Error())
+        return err
+    }
+    sortMsgArr := make([]models.RoomMsg, len(msgArr))
+    j := 0
+    for i:=len(msgArr)-1; i>0; i++ {
+        sortMsgArr[j] = msgArr[i]
+        j++
+    }
+    rspData := map[string]interface{}{}
+    rspData["room_id"] = room.Id
+    rspData["chat_history"] = sortMsgArr
+    msgArr = nil
+    tmpByte, err := common.EnJson(rspData)
+    if err != nil {
+        logs.Error("msg[sendLastChatToCurrentUser json encode err] err[%s]", err.Error())
+        return err
+    }
+    j.Rsp.Data = string(tmpByte)
+    return nil
 }
 
 func (j *JobWorker) getRoom(reqData *map[string]interface{}) *Room{
