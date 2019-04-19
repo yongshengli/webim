@@ -136,6 +136,8 @@ $(document).ready(function () {
         li.appendChild(face);
         li.appendChild(content);
         $('#chatbox').append(li);
+        var ele = document.getElementById('chatbox');
+        ele.scrollTop = ele.scrollHeight;
     }
     $('#sendbtn').click(function () {
         postConecnt();
