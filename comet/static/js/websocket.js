@@ -64,7 +64,7 @@ $(document).ready(function () {
     };
 
     // Send messages.
-    var postConecnt = function () {
+    var postContent = function () {
         var content = $('#sendbox').val()
         if (!content){
             alert("发送的内容不能为空")
@@ -139,7 +139,8 @@ $(document).ready(function () {
         var ele = document.getElementById('chatbox');
         ele.scrollTop = ele.scrollHeight;
     }
+    window.postContent = postContent
     $('#sendbtn').click(function () {
-        postConecnt();
+        postContent();
     });
 });

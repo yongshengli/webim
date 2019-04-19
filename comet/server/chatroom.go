@@ -201,9 +201,10 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
             logs.Error("msg[Broadcast DeJson err] err[%s]", err.Error())
             return false, err
         }
-    } else {
-        resData["room_id"] = r.Id
     }
+    resData["room_id"] = r.Id
+    resData["c_t"] = time.Now().Unix()
+
     jsonByte, err := common.EnJson(resData)
     if err != nil {
         return false, err

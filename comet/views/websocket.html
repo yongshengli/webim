@@ -21,7 +21,7 @@
                 <div class="box-footer">
                     <form class="input-group">
                         <input id="sendbox" type="text" class="form-control"
-                               onkeydown="if(event.keyCode==13)return false;"
+                               onkeydown="if(event.keyCode==13) postContent();"
                                required>
                         <span class="input-group-btn">
                             <button id="sendbtn" type="button" class="btn btn-success btn-flat">发送</button>
