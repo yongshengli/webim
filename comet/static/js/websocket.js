@@ -32,29 +32,17 @@ $(document).ready(function () {
             case 2: // JOIN
                 alert("加入房间")
                 if (data.User == $('#uname').text()) {
-                    li.innerText = 'You joined the chat room.';
+                    // li.innerText = 'You joined the chat room.';
                 } else {
-                    li.innerText = data.User + ' joined the chat room.';
+                    // li.innerText = data.User + ' joined the chat room.';
                 }
                 break;
             case 3: // LEAVE
                 alert("退出聊天室")
-                li.innerText = data.User + ' left the chat room.';
+                // li.innerText = data.User + ' left the chat room.';
                 break;
             case 1: // MESSAGE
-                var li = document.createElement('li');
-                var username = document.createElement('strong');
-                var content = document.createElement('span');
-                if (data['sid']) {
-                    sid = data['sid']
-                }
-                username.innerText = data.data['uname'] || "匿名用户";
-                content.innerText = data.data['content'];
-
-                li.appendChild(username);
-                li.appendChild(document.createTextNode(': '));
-                li.appendChild(content);
-                $('#chatbox li').first().before(li);
+                addMsg(data.data)
                 break;
             case 99:
                 var tMsg = {
@@ -69,20 +57,7 @@ $(document).ready(function () {
             case 4:
                 if (typeof data.data["chat_history"]!="undefined"){
                     for (var i=0; i<data.data["chat_history"].length; i++){
-                        var li = document.createElement('li');
-                        var content = document.createElement('span');
-                        var username = document.createElement('strong');
-
-                        if (data['sid']) {
-                            sid = data['sid']
-                        }
-                        username.innerText = data.data["chat_history"][i]['uname'] || "匿名用户";
-                        content.innerText = data.data["chat_history"][i]['content'];
-
-                        li.appendChild(username);
-                        li.appendChild(document.createTextNode(': '));
-                        li.appendChild(content);
-                        $('#chatbox li').first().before(li);
+                        addMsg(data.data["chat_history"][i])
                     }
                 }
         }
@@ -107,7 +82,61 @@ $(document).ready(function () {
         socket.send(JSON.stringify(tmpMsg));
         $('#sendbox').val('');
     }
+    Date.prototype.Format = function(fmt) { //author: meizz
+        var o = {
+            "M+" : this.getMonth()+1,                 //月份
+            "d+" : this.getDate(),                    //日
+            "h+" : this.getHours(),                   //小时
+            "m+" : this.getMinutes(),                 //分
+            "s+" : this.getSeconds(),                 //秒
+            "q+" : Math.floor((this.getMonth()+3)/3), //季度
+            "S"  : this.getMilliseconds()             //毫秒
+        };
+        if(/(y+)/.test(fmt))
+            fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+        for(var k in o)
+            if(new RegExp("("+ k +")").test(fmt))
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+        return fmt;
+    }
+    function addMsg(data){
+        var li = document.createElement('div');
+        var face = document.createElement('img');
+        var content = document.createElement('div');
+        face.className = 'direct-chat-img'
 
+        content.className = 'direct-chat-text'
+        if (data['sid']) {
+            sid = data['sid']
+        }
+        face.alt = data['uname'] || "匿名用户";
+        content.innerText = data['content'];
+        var info = document.createElement('div')
+        info.className = "direct-chat-info clearfix"
+
+        var uname = document.createElement("span")
+        var ctime = document.createElement("span")
+
+        if (data['uname']==$('#uname').text()) {
+            li.className = "direct-chat-msg right";
+            face.src = "/static/img/user3-128x128.jpg"
+            uname.className = 'direct-chat-name pull-right'
+            ctime.className = 'direct-chat-timestamp pull-left'
+        }else{
+            li.className = "direct-chat-msg";
+            face.src = "/static/img/user1-128x128.jpg"
+            uname.className = 'direct-chat-name pull-left'
+            ctime.className = 'direct-chat-timestamp pull-right'
+        }
+        uname.innerText = data['uname'] || "匿名用户";
+        ctime.innerText = new Date(data['c_t']*1000).Format("yyyy-M-d h:m:s")
+        info.appendChild(uname)
+        info.appendChild(ctime)
+        li.appendChild(info);
+        li.appendChild(face);
+        li.appendChild(content);
+        $('#chatbox').append(li);
+    }
     $('#sendbtn').click(function () {
         postConecnt();
     });

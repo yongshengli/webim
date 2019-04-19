@@ -4,22 +4,33 @@
 {{end}}
 {{define "body"}}
 <div class="container">
-    <h3>用户名: <span id="uname">{{.UserName}}</span></h3>
-    <h4>发送框:</h4>
-    <form class="form-inline">
-        <div class="col-md-6 form-group">
-            <input id="sendbox" type="text" class="form-control" onkeydown="if(event.keyCode==13)return false;" required>
+    <div class="col-md-5">
+        <h4>用户名: <span id="uname">{{.UserName}}</span></h4>
+        <div class="box box-success direct-chat direct-chat-success">
+            <div class="box-header with-border">
+                <h5>聊天</h5>
+            </div>
+            <div class="box-body">
+                <div class="direct-chat-messages" id="chatbox">
+                    <div class="direct-chat-msg">
+                        欢迎进入聊天室
+                    </div>
+                </div>
+            </div>
+            <div class="box-footer">
+                <form class="input-group">
+                    <input id="sendbox" type="text" class="form-control" onkeydown="if(event.keyCode==13)return false;"
+                           required>
+                    <span class="input-group-btn">
+            <button id="sendbtn" type="button" class="btn btn-success btn-flat">发送</button>
+            </span>
+                </form>
+            </div>
         </div>
-        <button id="sendbtn" type="button" class="btn btn-default">发送</button>
-    </form>
+    </div>
 </div>
 
-<div class="container">
-    <h5>聊天记录:</h5>
-    <ul id="chatbox">
-        <li>欢迎进入聊天室</li>
-    </ul>
-</div>
+
 <div class="container" style="color: red">
     <h4>通知消息:</h4>
     <ul id="noticebox">
