@@ -7,7 +7,7 @@ import (
     "time"
     "github.com/astaxie/beego/logs"
     "sync"
-    "github.com/dgryski/go-farm"
+    "webim/comet/common"
 )
 
 var Server *server
@@ -67,8 +67,7 @@ func (s *server) ReportLive(){
     }
 }
 func (s *server) getSlotPos(deviceToken string) int {
-    h := farm.Hash32([]byte(deviceToken))
-    return int(h) % s.slotContainerLen
+    return common.StrMod(deviceToken, s.slotContainerLen)
 }
 
 func (s *server) getSlot(deviceToken string) *Slot {
@@ -91,6 +90,14 @@ func (s *server) GetSessionByUid(uid string) *Session {
         return s.getSlot(t).Get(t)
     }
     return nil
+}
+//统计session的数量
+func (s *server) CountSession() int{
+    num := 0
+    for i:=0;i<s.slotContainerLen;i++{
+        num += s.slotContainer[i].Len()
+    }
+    return num
 }
 func (s *server) AddSession(ss *Session) bool {
     if len(ss.DeviceToken) < 1 {

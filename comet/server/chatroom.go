@@ -205,16 +205,17 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
     resData["room_id"] = r.Id
     resData["c_t"] = time.Now().Unix()
 
+    if roomMsgId, err := SaveRoomMsg(r.Id, msg); err != nil {
+        logs.Error("msg[room msg 写入数据库失败]")
+    } else {
+        resData["id"] = roomMsgId
+    }
     jsonByte, err := common.EnJson(resData)
     if err != nil {
         return false, err
     }
     msg.Data = string(jsonByte)
     msg.Type = TYPE_ROOM_MSG
-
-    if _, err = SaveRoomMsg(r.Id, msg); err != nil {
-        logs.Error("msg[room msg 写入数据库失败]")
-    }
 
     beego.Debug("msg[room broadcast]")
     users, err := r.Users()

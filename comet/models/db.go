@@ -7,7 +7,10 @@ import (
     "fmt"
 )
 
-var db *gorm.DB
+var (
+    db *gorm.DB
+    deviceDb *gorm.DB
+)
 
 func ConnectMysql(host, port, user, pass, dbName string) error {
     if db != nil {

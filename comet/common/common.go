@@ -5,6 +5,7 @@ import (
     "encoding/hex"
     "net"
     "log"
+    "github.com/dgryski/go-farm"
 )
 
 var localIp = ""
@@ -47,4 +48,10 @@ func Md5(text string) string {
     encoder := md5.New()
     encoder.Write([]byte(text))
     return hex.EncodeToString(encoder.Sum(nil))
+}
+
+//对字符串的hash取模
+func StrMod(str string, cardinal int) int{
+    h := farm.Hash32([]byte(str))
+    return int(h) % cardinal
 }
