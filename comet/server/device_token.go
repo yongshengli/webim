@@ -31,24 +31,24 @@ func getDeviceTokenByUid(uid string) (string, error) {
 func getDeviceTokenInfo(deviceToken string) (map[string]string, error) {
     var res map[string]string
     tokenKey := deviceTokenKey(deviceToken)
-    replay, err := common.RedisClient.Multi(func (conn redis.Conn){
-        conn.Send("GET", tokenKey)
-        conn.Send("TTL", tokenKey)
-    })
-    if replay == nil {
-        return nil, err
+    commands := make([]common.RedisCommands, 2)
+    commands[0] = common.RedisCommands{CommandName:"GET", Args:[]interface{}{tokenKey}}
+    commands[1] = common.RedisCommands{CommandName:"TTL", Args:[]interface{}{tokenKey}}
+    reply := common.RedisClient.Pipeline(commands)
+    for i:=0; i<len(commands); i++ {
+        if reply[i]["err"] != nil {
+            return nil, reply[i]["err"].(error)
+        }
     }
-    tmpRes := replay.([]interface{})
-    if tmpRes[0] == nil {
+    if reply[0]["reply"] == nil {
         return nil, nil
     }
-    if err = common.DeJson(tmpRes[0].([]byte), &res); err != nil {
+    if err := common.DeJson(reply[0]["reply"].([]byte), &res); err != nil {
         logs.Error("msg[解析json失败] method[getDeviceTokenInfo] err[%s]", err.Error())
         return nil, err
     }
-    if ttl := tmpRes[1].(int64); ttl < 3600 {
-        _, err = common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME)
-        if err != nil {
+    if ttl := reply[1]["reply"].(int64); ttl < 3600 {
+        if _, err := common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME); err != nil {
             logs.Error("msg[延长session有效期失败] err[%s]", err.Error())
         }
     }

@@ -29,14 +29,16 @@ func NewRoom(id string, name string) (*Room, error) {
         logs.Error("msg[room struct json encode err] err[%s]", err.Error())
         return nil, err
     }
-    res, err := common.RedisClient.Multi(func(conn redis.Conn) {
-        conn.Send("SETEX", roomKey(id), int(ROOM_LIVE_TIME/time.Second), roomJson)
-        conn.Send("ZADD", roomZsetKey(), time.Now().Unix(), id)
-    })
+    commands := make([]common.RedisCommands, 2)
+    commands[0] = common.RedisCommands{CommandName:"SETEX", Args:[]interface{}{roomKey(id), int(ROOM_LIVE_TIME/time.Second), roomJson}}
+    commands[1] = common.RedisCommands{CommandName:"ZADD", Args:[]interface{}{roomZsetKey(), time.Now().Unix(), id}}
+    res := common.RedisClient.Pipeline(commands)
     //fmt.Println(res)
-    if err != nil {
-        logs.Error("msg[新建Room失败] err[%s] result[%s]", err.Error(), res)
-        return nil, err
+    for i:=0; i<len(commands); i++ {
+        if res[i]["err"] != nil {
+            logs.Error("msg[新建Room失败] err[%s] result[%v]", res[i]["err"].(error), res[i]["reply"])
+            return nil, err
+        }
     }
     return room, nil
 }
@@ -62,29 +64,28 @@ func TotalRoom() (num int, err error) {
 
 func GetRoom(id string) (*Room, error) {
     roomRedisKey := roomKey(id)
-    res, err := common.RedisClient.Multi(func(conn redis.Conn) {
-        conn.Send("GET", roomRedisKey)
-        conn.Send("TTL", roomRedisKey)
-    })
-    if err != nil {
-        logs.Error("msg[获取房间失败] err[%s]", err.Error())
-        return nil, err
+    commands := make([]common.RedisCommands, 2)
+    commands[0] = common.RedisCommands{CommandName:"GET", Args:[]interface{}{roomRedisKey}}
+    commands[1] = common.RedisCommands{CommandName:"TTL", Args:[]interface{}{roomRedisKey}}
+    res := common.RedisClient.Pipeline(commands)
+    if res[0]["err"] != nil {
+        return nil, res[0]["err"].(error)
     }
-    if res == nil {
-        return nil, nil
+    if res[1]["err"] !=nil{
+        return nil, res[1]["err"].(error)
     }
-    result := res.([]interface{})
+    //fmt.Println(res)
     var room Room
-    if result[0] == nil {
+    if res[0]["reply"] == nil {
         return nil, nil
     }
-    if err = common.DeJson(result[0].([]byte), &room); err != nil {
+    if err := common.DeJson(res[0]["reply"].([]byte), &room); err != nil {
         logs.Error("msg[GetRoom解析room redis data err] err[%s]", err.Error())
         return nil, err
     }
 
-    if ttl := result[1].(int64); ttl < 3600*3 {
-        _, err = common.RedisClient.Expire(roomRedisKey, ROOM_LIVE_TIME)
+    if ttl := res[1]["reply"].(int64); ttl < 3600*3 {
+        _, err := common.RedisClient.Expire(roomRedisKey, ROOM_LIVE_TIME)
         if err != nil {
             logs.Error("msg[延长room data redis 时间失败] err[%s]", err.Error())
         }
@@ -92,16 +93,17 @@ func GetRoom(id string) (*Room, error) {
     return &room, nil
 }
 func DelRoom(id string) (int, error) {
-    res, err := common.RedisClient.Multi(func(conn redis.Conn) {
-        conn.Send("DEL", roomUserKey(id))
-        conn.Send("DEL", roomKey(id))
-        conn.Send("ZREM", roomZsetKey(), id)
-    })
-    if err != nil {
-        return 0, err
+    commands := make([]common.RedisCommands, 3)
+    commands[0] = common.RedisCommands{CommandName:"DEL", Args:[]interface{}{roomUserKey(id)}}
+    commands[1] = common.RedisCommands{CommandName:"DEL", Args:[]interface{}{roomKey(id)}}
+    commands[2] = common.RedisCommands{CommandName:"ZREM", Args:[]interface{}{roomZsetKey(), id}}
+    res := common.RedisClient.Pipeline(commands)
+    for i:=0; i<len(commands); i++{
+        if res[i]["err"] != nil {
+            return 0, res[i]["err"].(error)
+        }
     }
-    result := res.([]interface{})
-    return redis.Int(result[1], nil)
+    return redis.Int(res[1]["reply"], nil)
 }
 
 func roomKey(id string) string {

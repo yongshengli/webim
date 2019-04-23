@@ -5,6 +5,7 @@ import (
     "github.com/satori/go.uuid"
     "time"
     "github.com/astaxie/beego/logs"
+    "github.com/astaxie/beego"
 )
 
 type IWorker interface {
@@ -33,14 +34,16 @@ func NewJobWork(msg Msg, s *Session) *JobWorker {
 func (j *JobWorker) Log(){
     reqJson, _ := common.EnJson(j.Req)
     rspJson, _ := common.EnJson(j.Rsp)
-    logs.Info("trace_id[%s] req[%s] rsp[%s] req_time[%s] rsp_time[%s]", j.TraceID, string(reqJson), string(rspJson), j.ReqTime, j.RspTime)
+    logs.Info("trace_id[%s] req[%s] rsp[%s] req_time[%d] rsp_time[%d]", j.TraceID, string(reqJson), string(rspJson), j.ReqTime, j.RspTime)
 }
 func (j *JobWorker) Do() {
-    defer func(){
-        if r := recover(); r != nil{
-            logs.Error("msg[runtime err] err[%v]", r)
-        }
-    }()
+    if beego.AppConfig.String("runmode")!="dev" {
+        defer func() {
+            if r := recover(); r != nil {
+                logs.Error("msg[runtime err] err[%v]", r)
+            }
+        }()
+    }
     defer j.Log()
 
     switch j.Req.Type {

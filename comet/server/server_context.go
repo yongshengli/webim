@@ -18,11 +18,11 @@ func (sm *Context) Register(host string, server Info) (int, error){
         beego.Error(err)
         return 0, err
     }
-    return redis.Int(common.RedisClient.Do("hset", serverMapKey(), host, string(b)))
+    return redis.Int(common.RedisClient.Do("HSET", serverMapKey(), host, string(b)))
 }
 
 func (sm *Context) List() (map[string]Info, error) {
-    replay, err := common.RedisClient.Do("hgetall", serverMapKey())
+    replay, err := common.RedisClient.Do("HGETALL", serverMapKey())
     if err != nil {
         return nil, err
     }
@@ -50,9 +50,13 @@ func (sm *Context) List() (map[string]Info, error) {
     return res, nil
 }
 
+func (sm *Context) Len() (int, error) {
+    return redis.Int(common.RedisClient.Do("HLEN", serverMapKey()))
+}
+
 func (sm *Context) Remove(host string) (int, error){
     beego.Info("remove server " + host)
-    return redis.Int(common.RedisClient.Do("hdel", serverMapKey(), host))
+    return redis.Int(common.RedisClient.Do("HDEL", serverMapKey(), host))
 }
 
 func serverMapKey() string{

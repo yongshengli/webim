@@ -145,6 +145,25 @@ func (r *redisClient) Do(commandName string, args ...interface{}) (reply interfa
     defer conn.Close()
     return conn.Do(commandName, args...)
 }
+type RedisCommands struct{
+    CommandName string
+    Args []interface{}
+}
+func (r *redisClient) Pipeline(commands []RedisCommands) []map[string]interface{} {
+    conn := r.pool.Get()
+    defer conn.Close()
+    commandsNum := len(commands)
+    for i:=0; i<commandsNum; i++{
+        conn.Send(commands[i].CommandName, commands[i].Args...)
+    }
+    conn.Flush()
+    res := make([]map[string]interface{}, commandsNum)
+    for i:=0; i<commandsNum; i++{
+        reply, terr := conn.Receive()
+        res[i] = map[string]interface{}{"reply": reply, "err": terr}
+    }
+    return res
+}
 
 func (r *redisClient) Multi(callback func(conn redis.Conn)) (reply interface{}, err error) {
     conn := r.pool.Get()

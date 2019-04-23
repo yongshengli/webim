@@ -140,20 +140,6 @@ func (s *server) DelSession(ss *Session) bool {
     return true
 }
 
-type Monitor struct {
-    UserNum    int `json:"user_num"`
-    SessionNum int `json:"conn_num"`
-    RoomNum    int `json:"room_num"`
-}
-
-func Count() Monitor {
-    monitor := Monitor{
-        UserNum:    0,
-        SessionNum: 0,
-    }
-    return monitor
-}
-
 /**
  * 根据deviceToken找到用户对应的主机然后推送给用户
  */

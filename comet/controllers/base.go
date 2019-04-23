@@ -45,12 +45,12 @@ func (c *BaseController) Prepare() {
 }
 
 type Response struct {
-	Code int                    `json:"code"`
-	Msg  string                 `json:"msg"`
-	Data map[string]interface{} `json:"data"`
+	Code int         `json:"code"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data"`
 }
 
-func (c *BaseController) success(data map[string]interface{}) {
+func (c *BaseController) success(data interface{}) {
 	c.Data["json"] = &Response{
 		Code: 0,
 		Msg:  "ok",
