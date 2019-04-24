@@ -28,12 +28,22 @@ func FindOneDevice(deviceToken string) *Device {
     deviceDb.Table(DeviceTableName(deviceToken)).Where("umeng_token=?", deviceToken).First(&device)
     return device
 }
-
+//插入设备信息
 func InsertDevice(deviceToken string, data *Device) *gorm.DB {
     data.CT = time.Now().Unix()
     data.LastActive = data.CT
     data.UT = data.CT
     return deviceDb.Table(DeviceTableName(deviceToken)).Create(data)
+}
+//更新设备信息
+func UpdateDevice(deviceToken string, data *Device) *gorm.DB {
+    return deviceDb.Table(DeviceTableName(deviceToken)).Where("umeng_token=?", deviceToken).Update(data)
+}
+//更新最后活跃时间
+func UpdateLastActive(deviceToken string) *gorm.DB {
+    return deviceDb.Table(DeviceTableName(deviceToken)).
+        Where("umeng_token=?", deviceToken).
+        Update("last_active", time.Now().Unix())
 }
 
 func (d *Device) GetTableName(deviceToken string) string {
