@@ -17,6 +17,7 @@ type Device struct {
     VivoToken   string `json:"vivo_token"`
     OppoToken   string `json:"oppo_token"`
     Uid         uint   `json:"uid"`
+    Uname       string `json:"uname"`
     LastActive  int64  `json:"last_active"`
 
     CT          int64  `json:"c_t"`
