@@ -12,10 +12,10 @@ import (
 )
 const RPC_CHAN_NUM = 30
 
-type rpcPool chan *rpc.Client
+type rpcClinePool chan *rpc.Client
 type Context struct {
-    server server
-    serverRpcPoolMap map[string]rpcPool
+    server *server
+    serverRpcPoolMap map[string]rpcClinePool
 }
 
 func (sm *Context) CallRpcClient(host string, method, args string, reply interface{}) error{
@@ -26,7 +26,17 @@ func (sm *Context) CallRpcClient(host string, method, args string, reply interfa
     return nil
 }
 
-func (sm *Context) addServerRpcPool(host, port string) bool{
+func (sm *Context) createRpcClinePool() {
+    serverMap, err := sm.List()
+    if err != nil {
+        logs.Error("msg[createRpcClientPool err] err[%s]", err.Error())
+    }
+    for _, s := range serverMap {
+        sm.addServerRpcClinePool(s.Host, s.Port)
+    }
+}
+
+func (sm *Context) addServerRpcClinePool(host, port string) bool{
     if host == sm.server.Host {
         return false
     }

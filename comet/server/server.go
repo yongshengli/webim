@@ -32,14 +32,16 @@ func newServer(host, port string, slotContainerLen, slotLen int) *server {
         Port:       port,
         LastActive: time.Now().Unix(),
     }
+    context := new(Context)
     s := &server{
         Info:             info,
-        context:          new(Context),
+        context:          context,
         users:            sync.Map{},
         slotLen:          slotLen,
         slotContainerLen: slotContainerLen,
         slotContainer:    make([]*Slot, slotContainerLen),
     }
+    context.server = s
     for i := 0; i < slotContainerLen; i++ {
         s.slotContainer[i] = NewSlot(slotLen)
     }
