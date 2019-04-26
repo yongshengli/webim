@@ -56,7 +56,9 @@ func Run(host, port string, slotContainerLen, slotLen int){
     go RunRpcService(Server)
     logs.Debug("msg[server start...]")
 }
-
+func (s *server) CheckRpcPool(){
+    s.context.List()
+}
 func (s *server) ReportLive(){
     t := time.NewTicker(time.Minute)
     defer t.Stop()
