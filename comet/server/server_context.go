@@ -25,6 +25,7 @@ func (sm *Context) CallRpcClient(host string, method, args string, reply interfa
     }
     return nil
 }
+
 func (sm *Context) addServerRpcPool(host, port string) bool{
     if host == sm.server.Host {
         return false

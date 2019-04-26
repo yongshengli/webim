@@ -160,6 +160,7 @@ func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
                 logs.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
                 return false, err
             }
+            defer client.Close()
             args := map[string]interface{}{}
             args["device_token"] = deviceToken
             args["msg"] = msg
@@ -202,6 +203,7 @@ func (s *server) Broadcast(msg Msg) (bool, error) {
             args["msg"] = msg
             reply := false
             client.Call("RpcService.BroadcastSelf", args, &reply)
+            client.Close()
             logs.Debug("msg[发送广播] addr[%s], res:%t", addr, reply)
         }
     }
