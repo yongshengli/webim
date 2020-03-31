@@ -22,3 +22,16 @@ enter chat room from
 ```
 http://127.0.0.1:8080 
 ```
+
+## API 接口说明
+
+```
+ / 欢迎页
+ /webim  聊天室主页
+ /room/create  //创建聊天室接口
+ /room/delete  //删除聊天室接口
+ /ws           //websoket长链接
+ /push/unicast   //单播推送接口
+ /push/broadcast  //广播推送接口
+ /monitor/status  //系统监控接口
+```
