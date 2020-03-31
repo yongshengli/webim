@@ -1,11 +1,10 @@
 package server
 
 import (
-	"reflect"
 	"errors"
 	"fmt"
+	"reflect"
 )
-
 
 type Job struct {
 	TraceID string // 跟踪ID
@@ -29,7 +28,7 @@ type Msg struct {
 	Data        string  `json:"data"`
 }
 
-func Map2Msg(data map[string]interface{}) (Msg, error){
+func Map2Msg(data map[string]interface{}) (Msg, error) {
 	msg := &Msg{}
 	elem := reflect.ValueOf(msg).Elem()
 	relType := elem.Type()
