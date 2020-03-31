@@ -2,18 +2,13 @@
 
 [中文文档](README_ZH.md)
 
-This sample is about using long polling and WebSocket to build a web-based chat room based on beego.
+聊天室
+单聊
+登录登出
+广播
+单播
 
 - [Documentation](http://beego.me/docs/examples/chat.md)
-
-## Installation
-
-```
-cd $GOPATH/src/samples/WebIm
-go get github.com/gorilla/websocket
-go get github.com/beego/i18n
-bee run
-```
 
 ## Usage
 
