@@ -13,7 +13,7 @@ func TestAddFriend(t *testing.T) {
 	if res.Error != nil {
 		t.Error(res.Error)
 	}
-	list, err := FindFriends(1)
+	list, err := FindFriends(uint64(1))
 	if err != nil {
 		t.Error(err)
 	}

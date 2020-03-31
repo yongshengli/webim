@@ -91,9 +91,9 @@ func (s *Session) start() {
 		}
 	}
 }
-func (s *Session) Send(msg *Msg) {
+func (s *Session) Send(msg Msg) {
 	beego.Debug("msg[session send call]")
-	s.rspChan <- msg
+	s.rspChan <- &msg
 }
 
 //检查session是否有效
@@ -107,12 +107,12 @@ func (s *Session) ping() {
 		s.Close()
 		return
 	}
-	msg := &Msg{Type: TYPE_PING, Data: ""}
+	msg := Msg{Type: TYPE_PING, Data: ""}
 	s.Send(msg)
 }
 
 func (s *Session) pong() {
-	msg := &Msg{Type: TYPE_PONG, Data: ""}
+	msg := Msg{Type: TYPE_PONG, Data: ""}
 	s.Send(msg)
 }
 func (s *Session) write(msg *Msg) error {

@@ -28,7 +28,7 @@ func AddFriend(uid, fuid uint64) *gorm.DB {
  */
 func FindFriends(uid uint64) ([]*Friend, error) {
 	var list []*Friend
-	res := db.Where("uid=?", uid).Limit(100).Find(&list)
+	res := db.Table("friends").Where("uid=?", uid).Limit(100).Find(&list)
 	if res.Error != nil {
 		return list, res.Error
 	}

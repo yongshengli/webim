@@ -183,7 +183,7 @@ func (s *server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
 	slot := s.getSlot(deviceToken)
 	if slot.Has(deviceToken) {
-		slot.Get(deviceToken).Send(&msg)
+		slot.Get(deviceToken).Send(msg)
 		return true, nil
 	} else {
 		delDeviceTokenInfo(deviceToken)
@@ -222,7 +222,7 @@ func (s *server) BroadcastSelf(msg Msg) (bool, error) {
 	for _, slot := range s.slotContainer {
 		sessionsMap := slot.All()
 		for _, session := range sessionsMap {
-			session.Send(&msg)
+			session.Send(msg)
 		}
 	}
 
