@@ -6,6 +6,7 @@
 4.广播  (用户想全部在线用户推送消息)
 5.单播 （可用于向app推送消息）
 
+![Image text](./1585640224614.jpg)
 ## Usage
 
 cd webim/comet
