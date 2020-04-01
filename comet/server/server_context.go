@@ -1,9 +1,10 @@
 package server
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/rpc"
 	"net/rpc/jsonrpc"
+	"strings"
 	"time"
 	"webim/comet/common"
 
@@ -57,52 +58,48 @@ func (sm *Context) addServerRpcClinePool(host, port string) bool {
 	}
 	return true
 }
-func (sm *Context) Register(host string, server Info) (int, error) {
-	server.LastActive = time.Now().Unix()
-	b, err := json.Marshal(server)
-	if err != nil {
-		beego.Error(err)
-		return 0, err
-	}
-	return redis.Int(common.RedisClient.Do("HSET", serverMapKey(), host, string(b)))
+
+//Register 注册server
+func (sm *Context) Register(s Info) (int, error) {
+	key := fmt.Sprintf("%s:%d", s.Host, s.Port)
+	return redis.Int(common.RedisClient.Do("zadd", serverMapKey(), s.LastActive, key))
 }
 
-func (sm *Context) List() (map[string]Info, error) {
-	replay, err := common.RedisClient.Do("HGETALL", serverMapKey())
+//List 列出全部server
+func (sm *Context) List() ([]Info, error) {
+	//"WITHSCORES"
+	serverArr, err := redis.Int64Map(common.RedisClient.Do("zrevrange", serverMapKey(), 0, -1))
 	if err != nil {
 		return nil, err
 	}
-	if replay == nil {
-		return nil, nil
-	}
-	strM, err := redis.StringMap(replay, err)
-	if err != nil {
-		beego.Error(err)
-	}
+
 	timeNow := time.Now().Unix()
-	res := make(map[string]Info, len(strM))
-	for h, v := range strM {
-		t := Info{}
-		json.Unmarshal([]byte(v), &t)
-		leadTime := timeNow - t.LastActive
+	res := make([]Info, 0)
+	for s, at := range serverArr {
+		tmp := strings.Split(s, ":")
+		sInfo := Info{Host: tmp[0], Port: tmp[1], LastActive: at}
+		leadTime := timeNow - at
 		if leadTime > 60*3 { //客观下线
 			if leadTime > 600*5 { //物理下线
-				sm.Remove(t.Host)
+				sm.Remove(sInfo)
 			}
 			continue
 		}
-		res[h] = t
+		res = append(res, sInfo)
 	}
 	return res, nil
 }
 
+//Len 统计server个数
 func (sm *Context) Len() (int, error) {
 	return redis.Int(common.RedisClient.Do("HLEN", serverMapKey()))
 }
 
-func (sm *Context) Remove(host string) (int, error) {
-	beego.Info("remove server " + host)
-	return redis.Int(common.RedisClient.Do("HDEL", serverMapKey(), host))
+//Remove 移除server
+func (sm *Context) Remove(s Info) (int, error) {
+	key := fmt.Sprintf("%s:%d", s.Host, s.Port)
+	beego.Info("remove server " + key)
+	return redis.Int(common.RedisClient.Do("zrem", serverMapKey(), key))
 }
 
 func serverMapKey() string {

@@ -13,6 +13,7 @@ import (
 
 var Server *server
 
+//Info server基本信息
 type Info struct {
 	Host       string `json:"host"`
 	Port       string `json:"port"`
@@ -20,6 +21,7 @@ type Info struct {
 }
 type server struct {
 	Info
+	List             *[]Info
 	context          *Context
 	users            sync.Map
 	slotLen          int     //每个Solt 的长度
@@ -36,6 +38,7 @@ func newServer(host, port string, slotContainerLen, slotLen int) *server {
 	context := new(Context)
 	s := &server{
 		Info:             info,
+		List:             &[]Info{info},
 		context:          context,
 		users:            sync.Map{},
 		slotLen:          slotLen,
@@ -46,10 +49,11 @@ func newServer(host, port string, slotContainerLen, slotLen int) *server {
 	for i := 0; i < slotContainerLen; i++ {
 		s.slotContainer[i] = NewSlot(slotLen)
 	}
-	s.context.Register(s.Info.Host, s.Info)
+	s.context.Register(s.Info)
 	return s
 }
 
+//Run 执行
 func Run(host, port string, slotContainerLen, slotLen int) {
 	if host == "" || port == "" {
 		panic("host:port不能为空")
@@ -59,16 +63,28 @@ func Run(host, port string, slotContainerLen, slotLen int) {
 	go RunRpcService(Server)
 	logs.Debug("msg[server start...]")
 }
-func (s *server) CheckRpcPool() {
-	s.context.List()
+
+//UpdateList 更新server缓存列表
+func (s *server) UpdateList() {
+	list, err := s.context.List()
+	if err != nil {
+		logs.Error("msg[更新server列表缓存失败] err[%s]", err.Error())
+	}
+	if len(list) > 0 {
+		s.List = &list
+	}
 }
+
+//ReportLive 服务报活
 func (s *server) ReportLive() {
 	t := time.NewTicker(time.Minute)
 	defer t.Stop()
 	for {
 		<-t.C
-		s.context.Register(s.Host, s.Info)
-		logs.Debug("msg[服务报活] ip[%s]", s.Host)
+		s.Info.LastActive = time.Now().Unix()
+		s.context.Register(s.Info)
+		s.UpdateList()
+		logs.Debug("msg[服务报活,更新server缓存] ip[%s]", s.Host)
 	}
 }
 func (s *server) getSlotPos(deviceToken string) int {
@@ -89,9 +105,7 @@ func (s *server) GetSessionByDeviceToken(deviceToken string) *Session {
 	return s.getSlot(deviceToken).Get(deviceToken)
 }
 
-/**
-在本机查找session
-*/
+//GetSessionByUid 在本机查找session
 func (s *server) GetSessionByUid(uid string) *Session {
 	if deviceToken, ok := s.users.Load(uid); ok {
 		t := deviceToken.(string)
@@ -149,9 +163,7 @@ func (s *server) DelSession(ss *Session) bool {
 	return true
 }
 
-/**
- * 根据deviceToken找到用户对应的主机然后推送给用户
- */
+//Unicast 根据deviceToken找到用户对应的主机然后推送给用户
 func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
 	user, err := getDeviceTokenInfo(deviceToken)
 	if err != nil {
@@ -182,6 +194,8 @@ func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
 	}
 	return false, errors.New("设备不在线")
 }
+
+//SendMsg
 func (s *server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
 	slot := s.getSlot(deviceToken)
@@ -193,13 +207,11 @@ func (s *server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 		return false, errors.New("设备不在线")
 	}
 }
+
+//Broadcast 全部在线用户消息广播
 func (s *server) Broadcast(msg Msg) (bool, error) {
 	logs.Debug("msg[call_Broadcast]")
-	sMap, err := s.context.List()
-	if err != nil {
-		return false, err
-	}
-	for _, st := range sMap {
+	for _, st := range *s.List {
 		if st.Host == s.Host {
 			s.BroadcastSelf(msg)
 		} else {
@@ -220,6 +232,7 @@ func (s *server) Broadcast(msg Msg) (bool, error) {
 	return true, nil
 }
 
+//BroadcastSelf 本机在线用户消息广播
 func (s *server) BroadcastSelf(msg Msg) (bool, error) {
 	logs.Debug("msg[call_BroadcastSelf]")
 	for _, slot := range s.slotContainer {
