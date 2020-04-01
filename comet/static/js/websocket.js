@@ -25,7 +25,7 @@ $(document).ready(function () {
                 $('#noticebox').append(nHtml);
                 break;
             case 11:
-                if (data['data']['device_token']!="undefined"){
+                if (data.device_token!="undefined" && data.device_token.length>5){
                     showMainBox()
                     var tMsg = {"type":4,"data": JSON.stringify({"room_id":"1"})}
                     socket.send(JSON.stringify(tMsg))
@@ -172,7 +172,7 @@ $(document).ready(function () {
                 "password": password
             })
         }
-        console.log(tmpMsg)
+        //console.log(tmpMsg)
         socket.send(JSON.stringify(tmpMsg))
     })
 });

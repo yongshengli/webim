@@ -20,6 +20,22 @@ func (j *JobWorker) register() {
 
 	j.Rsp.Type = TYPE_REGISTER
 	j.s.User.DeviceId = data["device_id"].(string)
+
+	/**
+	同一个设备再次连接时检查此设备是否最近是否登录过
+	如果当前连接未登录但是此设备有未过期的session那么将该连接设为已录并关闭历史连接
+	**/
+	appKey := beego.AppConfig.String("appkey")
+	deviceToken := common.GenerateDeviceToken(j.s.User.DeviceId, appKey)
+
+	if j.s.DeviceToken != deviceToken {
+		cs := j.s.Server.GetSessionByDeviceToken(deviceToken)
+		if cs != nil && cs.DeviceToken != "" && cs != j.s {
+			j.s.DeviceToken = cs.DeviceToken
+			cs.Close()
+		}
+	}
+
 	j.Rsp.Data, _ = common.Map2String(map[string]interface{}{"code": 0})
 	j.s.Send(j.Rsp)
 }

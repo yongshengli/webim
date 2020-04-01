@@ -85,6 +85,9 @@ func (s *server) CheckSession(ss *Session) bool {
 	}
 	return s.getSlot(ss.DeviceToken).Has(ss.DeviceToken)
 }
+func (s *server) GetSessionByDeviceToken(deviceToken string) *Session {
+	return s.getSlot(deviceToken).Get(deviceToken)
+}
 
 /**
 在本机查找session
