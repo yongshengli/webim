@@ -56,12 +56,14 @@ $(document).ready(function () {
                     })
                 }
                 socket.send(JSON.stringify(tMsg));
+                break;
             case 4:
                 if (typeof data.data["chat_history"]!="undefined"){
                     for (var i=0; i<data.data["chat_history"].length; i++){
                         addMsg(data.data["chat_history"][i])
                     }
                 }
+                break;
             case 5:
                 if(data.data['code']!="undefined" && data.data['code']==0){
                     showMainBox()
@@ -70,6 +72,7 @@ $(document).ready(function () {
                 }else{
                     alert(data.data["content"])
                 } 
+                break;
         }
     };
     function showMainBox(){
