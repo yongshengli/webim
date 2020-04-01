@@ -16,8 +16,8 @@ func (c *UserController) Register() {
 
 	c.Ctx.Request.ParseForm()
 	if strings.ToUpper(c.Ctx.Request.Method) == "POST" {
-		userName := c.Ctx.Request.FormValue("uname")
-		password := c.Ctx.Request.FormValue("passwd")
+		userName := strings.Trim(c.Ctx.Request.FormValue("uname"), " ")
+		password := strings.Trim(c.Ctx.Request.FormValue("passwd"), " ")
 		if userName == "" || password == "" {
 			c.Data["msg"] = "用户名和密码不能为空"
 		} else {

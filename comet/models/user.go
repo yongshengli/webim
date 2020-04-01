@@ -16,16 +16,17 @@ type User struct {
 }
 
 func FindByName(name string) (*User, error) {
-	user := &User{UserName: name}
-	res := db.Table("user").First(user)
+	user := &User{}
+	res := db.Table("user").Where("user_name=?", name).First(user)
 	if res.Error != nil {
 		return user, res.Error
 	}
 	return user, nil
 }
 
-func CheckPwd(u *User, psw string) bool {
-	return u.Password == common.Md5(psw)
+func CheckPwd(u *User, passwd string) bool {
+	// return strings.EqualFold(u.Password, common.Md5(passwd))
+	return u.Password == common.Md5(passwd)
 }
 
 func InsertUser(u *User) *gorm.DB {
