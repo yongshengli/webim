@@ -13,11 +13,13 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+//Room 房间结构定义
 type Room struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
+//NewRoom 新建房间
 func NewRoom(id string, name string) (*Room, error) {
 	room := &Room{Id: id, Name: name}
 	roomJson, err := common.EnJson(room)
@@ -39,6 +41,7 @@ func NewRoom(id string, name string) (*Room, error) {
 	return room, nil
 }
 
+//RoomList 房间列表
 func RoomList(start, stop int) (map[string]string, error) {
 	res, err := common.RedisClient.Do("ZREVRANGE", roomZsetKey(), start, stop, "WITHSCORES")
 	if err != nil {
@@ -54,10 +57,12 @@ func RoomList(start, stop int) (map[string]string, error) {
 	return nil, errors.New("redis 返回的数据结构错误")
 }
 
+//TotalRoom 统计总房间数
 func TotalRoom() (num int, err error) {
 	return redis.Int(common.RedisClient.Do("ZCARD", roomZsetKey()))
 }
 
+//GetRoom 获取房间
 func GetRoom(id string) (*Room, error) {
 	roomRedisKey := roomKey(id)
 	commands := make([]common.RedisCommands, 2)
@@ -88,6 +93,8 @@ func GetRoom(id string) (*Room, error) {
 	}
 	return &room, nil
 }
+
+//DelRoom 删除房间
 func DelRoom(id string) (int, error) {
 	commands := make([]common.RedisCommands, 3)
 	commands[0] = common.RedisCommands{CommandName: "DEL", Args: []interface{}{roomUserKey(id)}}
