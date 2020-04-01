@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"strconv"
 	"webim/comet/common"
 	"webim/comet/models"
@@ -74,7 +73,7 @@ func (j *JobWorker) login() {
 		j.s.Send(j.Rsp)
 		return
 	}
-	fmt.Println(u)
+
 	if models.CheckPwd(u, pass) == false {
 		j.Rsp.Data, _ = common.Map2String(map[string]interface{}{"code": 1, "content": "用户名或者密码错误"})
 		j.s.Send(j.Rsp)

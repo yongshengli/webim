@@ -28,6 +28,7 @@ type Msg struct {
 	Data        string  `json:"data"`
 }
 
+//Map2Msg 将map装换为Msg结构体
 func Map2Msg(data map[string]interface{}) (Msg, error) {
 	msg := &Msg{}
 	elem := reflect.ValueOf(msg).Elem()

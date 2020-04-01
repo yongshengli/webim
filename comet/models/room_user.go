@@ -14,9 +14,7 @@ type RoomUser struct {
 	CT     int64  `json:"c_t" gorm:"column:c_t"`
 }
 
-/**
- * 向room 中插入用户
- */
+//InserRoomUser 向room 中插入用户
 func InserRoomUser(ru *RoomUser) *gorm.DB {
 	if db.NewRecord(ru) == false {
 		return nil
@@ -26,15 +24,15 @@ func InserRoomUser(ru *RoomUser) *gorm.DB {
 	}
 	return db.Table("room_user").Create(ru)
 }
+
+//FindByRoomId 查找房间内的用户
 func FindByRoomId(roomId uint64) ([]RoomUser, *gorm.DB) {
 	var list []RoomUser
 	res := db.Table("room_user").Where("room_id=?", roomId).Find(&list)
 	return list, res
 }
 
-/*
- * 批量添加用户到聊天室
- */
+//BatchInserRoomUser 批量添加用户到聊天室
 func BatchInserRoomUser(roomId uint64, uids []uint64) *gorm.DB {
 	slice := make([]interface{}, 0)
 	ct := time.Now().Unix()

@@ -13,6 +13,7 @@ type Friend struct {
 	CT   int64  `json:"c_t" gorm:"column:c_t"`
 }
 
+//AddFriend 添加好友
 func AddFriend(uid, fuid uint64) *gorm.DB {
 	//db.LogMode(true)
 	d := &Friend{
@@ -23,9 +24,7 @@ func AddFriend(uid, fuid uint64) *gorm.DB {
 	return db.Table("friends").Create(d)
 }
 
-/**
- * 先简单的获取用户的100个好友
- */
+//FindFriends 先简单的获取用户的100个好友
 func FindFriends(uid uint64) ([]*Friend, error) {
 	var list []*Friend
 	res := db.Table("friends").Where("uid=?", uid).Limit(100).Find(&list)

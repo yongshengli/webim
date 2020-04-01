@@ -6,12 +6,14 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+//Room room
 type Room struct {
 	RoomId   uint64 `json:"id" gorm:"primary_key"`
 	RoomName string `json:"room_name"`
 	CT       int64  `json:"c_t" gorm:"column:c_t"`
 }
 
+//InsertRoom 房间入表
 func InsertRoom(r *Room) *gorm.DB {
 	if db.NewRecord(r) == false {
 		return nil
@@ -22,9 +24,7 @@ func InsertRoom(r *Room) *gorm.DB {
 	return db.Table("room").Create(r)
 }
 
-/*
- * 创建房间并添加用户
- */
+//CreateRoom 创建房间并添加用户
 func CreateRoom(uids []uint64) uint64 {
 	ct := time.Now().Unix()
 	transaction := db.Begin()

@@ -194,8 +194,6 @@ func (r *Room) Leave(s *Session) (bool, error) {
 	return true, nil
 }
 
-// This function handles all incoming chan messages.
-
 //房间内广播
 func (r *Room) Broadcast(msg *Msg) (bool, error) {
 	resData := map[string]interface{}{}

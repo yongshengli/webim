@@ -10,13 +10,9 @@ import (
 	guuid "github.com/satori/go.uuid"
 )
 
-var localIp = ""
-
-/**
- * 获取本地ip
- */
+//GetLocalIp 获取本地ip
 func GetLocalIp() string {
-
+	var localIp = ""
 	if len(localIp) > 10 {
 		return localIp
 	}
@@ -37,28 +33,25 @@ func GetLocalIp() string {
 	return localIp
 }
 
-/**
- * 设成设备token
- */
+//GenerateDeviceToken 设成设备token
 func GenerateDeviceToken(deviceId string, appKey string) string {
 	return Md5(deviceId + "|" + appKey)
 }
 
-/**
- * MD5编码
- */
+//Md5 字符串MD5编码
 func Md5(text string) string {
 	encoder := md5.New()
 	encoder.Write([]byte(text))
 	return hex.EncodeToString(encoder.Sum(nil))
 }
 
-//对字符串的hash取模
+//StrMod 对字符串的hash取模
 func StrMod(str string, cardinal int) int {
 	h := farm.Hash32([]byte(str))
 	return int(h) % cardinal
 }
 
+//Map2String 将map 装换为json string
 func Map2String(m map[string]interface{}) (string, error) {
 	resByte, err := EnJson(m)
 	if err != nil {
@@ -67,10 +60,12 @@ func Map2String(m map[string]interface{}) (string, error) {
 	return string(resByte), nil
 }
 
+//Uuid 获取UUID
 func Uuid() string {
 	return guuid.NewV4().String()
 }
 
+//LogId 获取logid
 func LogId() string {
 	return guuid.NewV1().String()
 }

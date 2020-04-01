@@ -22,21 +22,20 @@ type RoomMsg struct {
 	CT      int64  `json:"c_t" gorm:"column:c_t"`
 }
 
-/*
- * RoomMsgTableName
- * 获取room_msg 表名
- */
+//RoomMsgTableName 获取room_msg 表名
 func RoomMsgTableName(roomId string) string {
 	//暂时先使用一个表
 	return "room_msg"
 	h := farm.Hash32([]byte(roomId))
 	return fmt.Sprintf("room_msg_%d", int(h)%ROOM_MSG_NUM)
 }
+
+//GetTableName
 func (rm *RoomMsg) GetTableName(roomId string) string {
 	return RoomMsgTableName(rm.RoomId)
 }
 
-//获取最新的几条聊天室聊天记录
+//FindRoomMsgLast 获取最新的几条聊天室聊天记录
 func FindRoomMsgLast(roomId string, limit int) (arr []RoomMsg, err error) {
 	//arr = []RoomMsg{}
 	res := db.Table(RoomMsgTableName(roomId)).
@@ -49,6 +48,8 @@ func FindRoomMsgLast(roomId string, limit int) (arr []RoomMsg, err error) {
 	}
 	return
 }
+
+//GetLastRoomMsg 获取最近的消息
 func GetLastRoomMsg(roomId string, limit int) ([]RoomMsg, error) {
 
 	byteArr, err := redis.ByteSlices(common.RedisClient.Do("zrevrange", msgZsetKey(roomId), 0, limit))
@@ -63,13 +64,13 @@ func GetLastRoomMsg(roomId string, limit int) ([]RoomMsg, error) {
 	}
 	return list, nil
 }
+
+//CreateMsgId 生成消息id
 func CreateMsgId(roomId string) (uint64, error) {
 	return common.RedisClient.Incr(msgIdKey(roomId))
 }
 
-/**
-   保存消息到redis中
-**/
+//SaveMsg2Redis 保存消息到redis中
 func SaveMsg2Redis(data *RoomMsg) (int64, error) {
 	var err error
 	roomId := data.RoomId
@@ -96,7 +97,7 @@ func msgZsetKey(roomId string) string {
 	return fmt.Sprintf("room:%s:msgZset", roomId)
 }
 
-//写入一条聊天数据数据
+//InsertRoomMsg 写入一条聊天数据数据
 func InsertRoomMsg(data *RoomMsg) *gorm.DB {
 	roomId := data.RoomId
 	if db.NewRecord(data) == false {
