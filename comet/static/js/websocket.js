@@ -167,6 +167,7 @@ $(document).ready(function () {
             alert("用户名或者密码或者设备id为空")
             return
         }
+        $('#uname').text(uname)
         var tmpMsg = {
             "type": 5,
             "data": JSON.stringify({

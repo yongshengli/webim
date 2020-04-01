@@ -61,6 +61,7 @@ func (j *JobWorker) roomMsg() {
 		j.s.Send(j.Rsp)
 	} else {
 		rspData["uid"] = j.s.User.Id
+		rspData["uname"] = j.s.User.Name
 		rspData["room_id"] = room.Id
 		if TmpRspData, err := common.EnJson(rspData); err == nil {
 			j.Rsp.Data = string(TmpRspData)
@@ -101,7 +102,7 @@ func (j *JobWorker) createRoom() {
 }
 
 func (j *JobWorker) sendLastChatToCurrentUser(room *Room) error {
-	msgArr, err := models.FindRoomMsgLast(room.Id, 30)
+	msgArr, err := models.GetLastRoomMsg(room.Id, 30)
 	if err != nil {
 		logs.Error("msg[获取聊天室最后30条聊天记录失败] err[%s]", err.Error())
 		return err

@@ -263,6 +263,7 @@ func SaveRoomMsg(roomId string, msg *Msg) (uint64, error) {
 		uidInt = int64(uid.(float64))
 	}
 	roomMsg := &models.RoomMsg{RoomId: roomId, Content: content.(string), Uid: uidInt, Uname: uname.(string), CT: time.Now().Unix()}
-	res := models.InsertRoomMsg(roomId, roomMsg)
-	return roomMsg.Id, res.Error
+	// res := models.InsertRoomMsg(roomId, roomMsg)
+	_, err := models.SaveMsg2Redis(roomMsg)
+	return roomMsg.MsgId, err
 }

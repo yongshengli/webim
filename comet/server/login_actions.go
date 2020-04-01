@@ -1,6 +1,7 @@
 package server
 
 import (
+	"strconv"
 	"webim/comet/common"
 	"webim/comet/models"
 
@@ -80,10 +81,11 @@ func (j *JobWorker) login() {
 	appKey := beego.AppConfig.String("appkey")
 	deviceToken := common.GenerateDeviceToken(deviceId, appKey)
 	j.s.DeviceToken = deviceToken
+	j.s.User.DeviceToken = deviceToken
 	j.s.User.DeviceId = deviceId
-	if j.s.User.Name == "" {
-		j.s.User.Name = userName
-	}
+	j.s.User.Name = userName
+	j.s.User.Id = strconv.FormatInt(int64(u.Id), 10)
+
 	//保存token session信息到redis中
 	j.s.Server.AddSession(j.s)
 	j.Rsp.DeviceToken = deviceToken

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -27,8 +26,8 @@ func TestCreateRoom(t *testing.T) {
 	if len(list) < len(uids) {
 		t.Error("写入数据条数不一致")
 	}
-	for _, r := range list {
-		fmt.Println(r)
-	}
-	fmt.Println(roomId)
+	db.Table("room").Delete(&Room{}, "room_id=?", roomId)
+}
+func init() {
+	ConnectTestMysql()
 }

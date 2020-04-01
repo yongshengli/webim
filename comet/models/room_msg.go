@@ -3,8 +3,10 @@ package models
 import (
 	"fmt"
 	"time"
+	"webim/comet/common"
 
 	"github.com/dgryski/go-farm"
+	"github.com/gomodule/redigo/redis"
 	"github.com/jinzhu/gorm"
 )
 
@@ -12,6 +14,7 @@ const ROOM_MSG_NUM = 1024
 
 type RoomMsg struct {
 	Id      uint64 `json:"id" gorm:"primary_key"`
+	MsgId   uint64 `json:"msg_id"`
 	RoomId  string `json:"room_id"`
 	Uid     int64  `json:"uid"`
 	Uname   string `json:"uname"`
@@ -20,8 +23,8 @@ type RoomMsg struct {
 }
 
 /*
-* RoomMsgTableName
-* 获取room_msg 表名
+ * RoomMsgTableName
+ * 获取room_msg 表名
  */
 func RoomMsgTableName(roomId string) string {
 	//暂时先使用一个表
@@ -46,9 +49,55 @@ func FindRoomMsgLast(roomId string, limit int) (arr []RoomMsg, err error) {
 	}
 	return
 }
+func GetLastRoomMsg(roomId string, limit int) ([]RoomMsg, error) {
+
+	byteArr, err := redis.ByteSlices(common.RedisClient.Do("zrevrange", msgZsetKey(roomId), 0, limit))
+	if err != nil {
+		return nil, err
+	}
+	list := make([]RoomMsg, 0, len(byteArr))
+	for _, r := range byteArr {
+		var tmp RoomMsg
+		common.DeJson(r, &tmp)
+		list = append(list, tmp)
+	}
+	return list, nil
+}
+func CreateMsgId(roomId string) (uint64, error) {
+	return common.RedisClient.Incr(msgIdKey(roomId))
+}
+
+/**
+   保存消息到redis中
+**/
+func SaveMsg2Redis(data *RoomMsg) (int64, error) {
+	var err error
+	roomId := data.RoomId
+	data.MsgId, err = CreateMsgId(roomId)
+	if err != nil {
+		return 0, err
+	}
+	if data.CT < 1 {
+		data.CT = time.Now().Unix()
+	}
+	d, _ := common.EnJson(data)
+	reply, err := redis.Int64(common.RedisClient.Do("zadd", msgZsetKey(roomId), data.MsgId, d))
+	if err != nil {
+		return reply, err
+	}
+	return common.RedisClient.Expire(msgZsetKey(roomId), 7*24*time.Hour)
+}
+
+func msgIdKey(roomId string) string {
+	return fmt.Sprintf("room:%s:msgId", roomId)
+}
+func msgZsetKey(roomId string) string {
+	return fmt.Sprintf("room:%s:msgZset", roomId)
+}
 
 //写入一条聊天数据数据
-func InsertRoomMsg(roomId string, data *RoomMsg) *gorm.DB {
+func InsertRoomMsg(data *RoomMsg) *gorm.DB {
+	roomId := data.RoomId
 	if db.NewRecord(data) == false {
 		return nil
 	}
