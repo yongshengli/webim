@@ -12,11 +12,8 @@ import (
 
 //GetLocalIp 获取本地ip
 func GetLocalIp() string {
-	var localIp = ""
-	if len(localIp) > 10 {
-		return localIp
-	}
 
+	var localIp = ""
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		log.Printf("msg[get_local_ip_failure] detail[%s]", err.Error())
