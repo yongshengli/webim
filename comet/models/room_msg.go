@@ -85,6 +85,7 @@ func SaveMsg2Redis(data *RoomMsg) (int64, error) {
 	if err != nil {
 		return reply, err
 	}
+	common.RedisClient.Do("ZREMRANGEBYRANK", msgZsetKey(roomId), 0, -3000)
 	return common.RedisClient.Expire(msgZsetKey(roomId), 7*24*time.Hour)
 }
 
