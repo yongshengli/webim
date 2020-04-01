@@ -138,7 +138,7 @@ func (j *JobWorker) getRoom(reqData *map[string]interface{}) *Room {
 	}
 	room, err := GetRoom((*reqData)["room_id"].(string))
 	if err != nil {
-		logs.Error("msg[获取房价失败] err[%s]", err.Error())
+		logs.Error("msg[获取房间失败] err[%s]", err.Error())
 		return nil
 	}
 	return room
