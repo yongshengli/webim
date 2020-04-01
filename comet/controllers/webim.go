@@ -1,5 +1,7 @@
 package controllers
 
+import "webim/comet/common"
+
 var langTypes []string // Languages that are supported.
 
 // AppController handles the welcome screen that allows user to pick a technology and username.
@@ -16,14 +18,8 @@ func (c *WebIMController) Welcome() {
 // Get method handles GET requests for WebImController.
 func (c *WebIMController) Get() {
 	// Safe check.
-	uname := c.GetString("uname")
-	if len(uname) == 0 {
-		c.Redirect("/", 302)
-		return
-	}
 	c.TplName = "websocket.html"
 	c.Data["IsWebSocket"] = true
-	c.Data["UserName"] = uname
+	c.Data["DeviceId"] = common.Uuid()
 	c.Render()
 }
-

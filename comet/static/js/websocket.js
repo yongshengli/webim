@@ -2,10 +2,10 @@ var socket;
 var sid;
 $(document).ready(function () {
     // Create a socket
-    socket = new WebSocket('ws://' + window.location.host + '/ws?uname=' + $('#uname').text());
+    socket = new WebSocket('ws://' + window.location.host + '/ws');
     socket.onopen = function() {
         console.log("建立长连接");
-        var data = {"type": 11, "data": JSON.stringify({"device_id": $('#uname').text()})}
+        var data = {"type": 11, "data": JSON.stringify({"device_id": $('input[name="device_id"]').val()})}
         socket.send(JSON.stringify(data))
     };
     // Message received on the socket
@@ -25,9 +25,11 @@ $(document).ready(function () {
                 $('#noticebox').append(nHtml);
                 break;
             case 11:
-                alert("device_token:" + data['data']['device_token'])
-                var tMsg = {"type":4,"data": JSON.stringify({"room_id":"1"})}
-                socket.send(JSON.stringify(tMsg))
+                if (data['data']['device_token']!="undefined"){
+                    showMainBox()
+                    var tMsg = {"type":4,"data": JSON.stringify({"room_id":"1"})}
+                    socket.send(JSON.stringify(tMsg))
+                }
                 break;
             case 2: // JOIN
                 alert("加入房间")
@@ -60,9 +62,20 @@ $(document).ready(function () {
                         addMsg(data.data["chat_history"][i])
                     }
                 }
+            case 5:
+                if(data.data['code']!="undefined" && data.data['code']==0){
+                    showMainBox()
+                    var tMsg = {"type":4,"data": JSON.stringify({"room_id":"1"})}
+                    socket.send(JSON.stringify(tMsg))
+                }else{
+                    alert(data.data["content"])
+                } 
         }
     };
-
+    function showMainBox(){
+        $('#login-box').hide()
+        $('#main-box').show()
+    }
     // Send messages.
     var postContent = function () {
         var content = $('#sendbox').val()
@@ -143,4 +156,23 @@ $(document).ready(function () {
     $('#sendbtn').click(function () {
         postContent();
     });
+    $('#login-btn').click(function () {
+        uname = $('input[name="uname"]').val()
+        deviceId = $('input[name="device_id"]').val()
+        password = $('input[name="password"]').val()
+        if (uname=="" || password=="" || deviceId==""){
+            alert("用户名或者密码或者设备id为空")
+            return
+        }
+        var tmpMsg = {
+            "type": 5,
+            "data": JSON.stringify({
+                "device_id": deviceId,
+                "username": uname,
+                "password": password
+            })
+        }
+        console.log(tmpMsg)
+        socket.send(JSON.stringify(tmpMsg))
+    })
 });

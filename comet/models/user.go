@@ -17,7 +17,7 @@ type User struct {
 
 func FindByName(name string) (*User, error) {
 	user := &User{UserName: name}
-	res := db.First(user)
+	res := db.Table("user").First(user)
 	if res.Error != nil {
 		return user, res.Error
 	}

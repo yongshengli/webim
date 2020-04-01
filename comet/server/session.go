@@ -148,14 +148,10 @@ func (s *Session) do(msg *Msg) {
 		return
 	}
 	//没有带deviceToken的链接不予许访问register以外的业务方法
-	if msg.Type != TYPE_REGISTER {
+	if msg.Type != TYPE_REGISTER && msg.Type != TYPE_LOGIN {
 		if s.checkSession() == false {
-			if msg.DeviceToken != "" {
-				s.DeviceToken = msg.DeviceToken
-				s.Server.AddSession(s)
-			} else {
-				return
-			}
+			s.Send(Msg{Type: msg.Type, Data: "验证用户登录信息失败"})
+			return
 		}
 	}
 	NewJobWork(*msg, s).Do()

@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/dgryski/go-farm"
+	guuid "github.com/satori/go.uuid"
 )
 
 var localIp = ""
@@ -64,4 +65,12 @@ func Map2String(m map[string]interface{}) (string, error) {
 		return "", err
 	}
 	return string(resByte), nil
+}
+
+func Uuid() string {
+	return guuid.NewV4().String()
+}
+
+func LogId() string {
+	return guuid.NewV1().String()
 }
