@@ -1,12 +1,13 @@
 package main
 
 import (
+	"webim/comet/common"
+	"webim/comet/controllers"
+	"webim/comet/models"
+	"webim/comet/server"
+
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
-	"webim/comet/controllers"
-	"webim/comet/common"
-	"webim/comet/server"
-	"webim/comet/models"
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 	beego.Router("/push/broadcast", &controllers.PushController{}, "post:Broadcast")
 	beego.Router("/monitor/status", &controllers.MonitorController{}, "get:Status")
 
+	beego.Router("/user/register", &controllers.UserController{}, "get,post:Register")
+
 	common.RedisInit(map[string]string{
 		"host": beego.AppConfig.String("redis.host"),
 		"port": beego.AppConfig.String("redis.port"),
@@ -36,15 +39,15 @@ func main() {
 		beego.AppConfig.String("mysql.pass"),
 		beego.AppConfig.String("mysql.db"),
 	)
-	if err !=nil {
-	    panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 	// Register template functions.
 	beego.AddFuncMap("i18n", i18n.Tr)
 
 	rpcPort := beego.AppConfig.String("rpcport")
 
-	server.Run(common.GetLocalIp(), rpcPort,100, 10000)
+	server.Run(common.GetLocalIp(), rpcPort, 100, 10000)
 
 	beego.Run()
 

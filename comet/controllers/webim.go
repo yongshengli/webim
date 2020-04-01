@@ -12,9 +12,6 @@ type WebIMController struct {
 //method for WebIMController.
 func (c *WebIMController) Welcome() {
 	c.Redirect("/webim", 302)
-	return
-	c.TplName = "welcome.html"
-	c.Render()
 }
 
 // Get method handles GET requests for WebImController.
