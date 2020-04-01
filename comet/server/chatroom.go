@@ -13,11 +13,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-type RUser struct {
-	DeviceToken string `json:"device_token"`
-	IP          string `json:"ip"`   //sid 所在机器ip
-	User        User   `json:"user"` //用户数据
-}
 type Room struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
@@ -117,27 +112,16 @@ func roomUserKey(roomId string) string {
 	return "comet:roomUserList:" + roomId
 }
 
-func (r *Room) Users() (map[string]interface{}, error) {
-	replay, err := common.RedisClient.Do("hgetall", roomUserKey(r.Id))
+//Users 房间内全部用户的token
+func (r *Room) Users(start, end int) ([]string, error) {
+	tokenSlice, err := redis.Strings(common.RedisClient.Do("zrange", roomUserKey(r.Id), start, end))
 	if err != nil {
 		return nil, err
 	}
-	if replay == nil {
-		return nil, nil
-	}
-	tmap, err := redis.StringMap(replay, err)
-	if err != nil {
-		return nil, err
-	}
-	res := map[string]interface{}{}
-	for dt, st := range tmap {
-		ru := RUser{}
-		common.DeJson([]byte(st), &ru)
-		res[dt] = ru
-	}
-	return res, nil
+	return tokenSlice, nil
 }
 
+//Join 加入房间
 func (r *Room) Join(s *Session) (bool, error) {
 	//r.users[s.Id] = RUser{SId:s.Id, Ip:s.IP, User:*s.User}
 	//退出旧房间
@@ -149,21 +133,8 @@ func (r *Room) Join(s *Session) (bool, error) {
 		}
 	}
 	s.RoomId = r.Id
-	ru := RUser{DeviceToken: s.DeviceToken, User: *s.User, IP: s.IP}
-	//查找当前用户是否已经在聊天室中
-	user, err := common.RedisClient.Do("hget", roomUserKey(r.Id), ru.DeviceToken)
-	if err != nil {
-		return false, err
-	}
-	//用户已经在聊天室中直接返回成功
-	if user != nil {
-		return true, nil
-	}
-	jsonStr, err := common.EnJson(ru)
-	if err != nil {
-		return false, err
-	}
-	res, err := redis.Int(common.RedisClient.Do("hset", roomUserKey(r.Id), ru.DeviceToken, jsonStr))
+	// ru := RUser{DeviceToken: , User: *s.User}
+	res, err := redis.Int(common.RedisClient.Do("zadd", roomUserKey(r.Id), time.Now().Unix(), s.DeviceToken))
 	if err != nil {
 		return false, err
 	}
@@ -173,16 +144,17 @@ func (r *Room) Join(s *Session) (bool, error) {
 	return true, nil
 }
 
+//Leave 离开房间
 func (r *Room) Leave(s *Session) (bool, error) {
 	if len(s.DeviceToken) < 1 {
 		return false, errors.New("session.DeviceToken为空")
 	}
 
-	if _, err := common.RedisClient.Do("hdel", roomUserKey(r.Id), s.DeviceToken); err != nil {
+	if _, err := common.RedisClient.Do("zrem", roomUserKey(r.Id), s.DeviceToken); err != nil {
 		return false, err
 	}
 	s.RoomId = ""
-	userNum, err := redis.Int(common.RedisClient.Do("hlen", roomUserKey(r.Id)))
+	userNum, err := redis.Int(common.RedisClient.Do("zcard", roomUserKey(r.Id)))
 	if err != nil {
 		return false, err
 	}
@@ -194,7 +166,7 @@ func (r *Room) Leave(s *Session) (bool, error) {
 	return true, nil
 }
 
-//房间内广播
+//Broadcast 房间内广播
 func (r *Room) Broadcast(msg *Msg) (bool, error) {
 	resData := map[string]interface{}{}
 	if msg.Data != "" {
@@ -219,20 +191,29 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
 	msg.Type = TYPE_ROOM_MSG
 
 	beego.Debug("msg[room broadcast]")
-	users, err := r.Users()
-	if err != nil {
-		return false, err
-	}
-	//beego.Debug("msg[room中的用户] users[%s]", users)
-	for _, user := range users {
-		//session.Send(msg)
-		tmsg := *msg
-		tmsg.DeviceToken = user.(RUser).DeviceToken
-		Server.Unicast(tmsg.DeviceToken, tmsg)
+	start := 0
+	pageSize := 1000
+	for {
+		end := start + pageSize - 1
+		users, err := r.Users(start, start+pageSize)
+		start = end + 1
+		if err != nil {
+			return false, err
+		}
+		if len(users) < 1 {
+			break
+		}
+		//beego.Debug("msg[room中的用户] users[%s]", users)
+		for _, user := range users {
+			//session.Send(msg)
+			tmsg := *msg
+			Server.Unicast(user, tmsg)
+		}
 	}
 	return true, nil
 }
 
+//SaveRoomMsg 保存聊天记录到
 func SaveRoomMsg(roomId string, msg *Msg) (uint64, error) {
 	var msgData map[string]interface{}
 	if err := common.DeJson([]byte(msg.Data), &msgData); err != nil {
