@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/rpc/jsonrpc"
 	"sync"
 	"time"
@@ -84,7 +85,7 @@ func (s *server) ReportLive() {
 		s.Info.LastActive = time.Now().Unix()
 		s.context.Register(s.Info)
 		s.UpdateList()
-		logs.Debug("msg[服务报活,更新server缓存] ip[%s]", s.Host)
+		logs.Debug("msg[服务报活,更新server缓存] server[%s:%s]", s.Host, s.Port)
 	}
 }
 func (s *server) getSlotPos(deviceToken string) int {
@@ -172,40 +173,41 @@ func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
 	if user == nil {
 		return false, errors.New("用户token不存在")
 	}
-	if ip, ok := user["ip"]; ok && len(ip) > 1 {
-		if ip == s.Host {
+	if addr, ok := user["ip"]; ok && len(addr) > 1 {
+		if addr == fmt.Sprintf("%s:%s", s.Host, s.Port) {
 			return s.SendMsg(deviceToken, msg)
-		} else {
-			addr := ip + ":" + s.Port
-			client, err := jsonrpc.Dial("tcp", addr)
-			if err != nil {
-				logs.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
-				return false, err
-			}
-			defer client.Close()
-			args := map[string]interface{}{}
-			args["device_token"] = deviceToken
-			args["msg"] = msg
-			reply := false
-			client.Call("RpcService.Unicast", args, &reply)
-			logs.Debug("发送单播addr%s, res:%t", addr, reply)
-			return true, nil
 		}
+		client, err := jsonrpc.Dial("tcp", addr)
+		if err != nil {
+			logs.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+			return false, err
+		}
+		defer client.Close()
+		args := map[string]interface{}{}
+		args["device_token"] = deviceToken
+		args["msg"] = msg
+		reply := false
+		err = client.Call("RpcService.Unicast", args, &reply)
+		if err != nil {
+			logs.Error("msg[发送单播addr:%s失败] args[%v] res[%v] err[%s]", addr, args, reply, err.Error())
+		} else {
+			logs.Debug("msg[发送单播addr:%s成功] args[%v] res[%v]", addr, args, reply)
+		}
+		return true, nil
 	}
 	return false, errors.New("设备不在线")
 }
 
-//SendMsg
+//SendMsg 向本机用户发送消息
 func (s *server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
 	slot := s.getSlot(deviceToken)
 	if slot.Has(deviceToken) {
 		slot.Get(deviceToken).Send(msg)
 		return true, nil
-	} else {
-		delDeviceTokenInfo(deviceToken)
-		return false, errors.New("设备不在线")
 	}
+	delDeviceTokenInfo(deviceToken)
+	return false, errors.New("设备不在线")
 }
 
 //Broadcast 全部在线用户消息广播

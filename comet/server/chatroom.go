@@ -113,7 +113,7 @@ func roomKey(id string) string {
 	return "comet:room:" + id
 }
 func roomZsetKey() string {
-	return "comet:room_zset"
+	return "comet:roomZset"
 }
 func roomUserKey(roomId string) string {
 	return "comet:roomUserList:" + roomId

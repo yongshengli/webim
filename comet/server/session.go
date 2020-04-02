@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ func NewSession(conn *websocket.Conn, s *server) *Session {
 	u := &User{
 		Id:     "0",
 		Name:   "匿名用户",
-		IP:     s.Host,
+		IP:     fmt.Sprintf("%s:%s", s.Host, s.Port),
 		RealIP: conn.RemoteAddr().String(),
 	}
 	return &Session{
@@ -49,7 +50,7 @@ func NewSession(conn *websocket.Conn, s *server) *Session {
 		User:          u,
 		Conn:          conn,
 		Server:        s,
-		IP:            s.Host,
+		IP:            u.IP,
 		stopChan:      make(chan bool),
 		reqChan:       make(chan *Msg, 1000),
 		rspChan:       make(chan *Msg, 1000),

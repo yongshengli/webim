@@ -22,10 +22,11 @@ func (rf *RpcService) Unicast(args map[string]interface{}, reply *bool) error {
 	if _, ok := args["msg"]; !ok {
 		return errors.New("msg不能为空")
 	}
-	if _, tok := args["msg"].(Msg); !tok {
-		return errors.New("msg格式错误")
+	msg, err := Map2Msg(args["msg"].(map[string]interface{}))
+	if err != nil {
+		return err
 	}
-	res, err := rf.s.Unicast(args["device_token"].(string), args["msg"].(Msg))
+	res, err := rf.s.Unicast(args["device_token"].(string), msg)
 	*reply = res
 	return err
 }
@@ -35,10 +36,14 @@ func (rf *RpcService) Broadcast(args map[string]interface{}, reply *bool) error 
 	if _, ok := args["msg"]; !ok {
 		return errors.New("msg不能为空")
 	}
-	if _, tok := args["msg"].(Msg); !tok {
+	if _, ok := args["msg"].(map[string]interface{}); !ok {
 		return errors.New("msg格式错误")
 	}
-	res, err := rf.s.Broadcast(args["msg"].(Msg))
+	msg, err := Map2Msg(args["msg"].(map[string]interface{}))
+	if err != nil {
+		return err
+	}
+	res, err := rf.s.Broadcast(msg)
 	*reply = res
 	return err
 }
@@ -48,10 +53,14 @@ func (rf *RpcService) BroadcastSelf(args map[string]interface{}, reply *bool) er
 	if _, ok := args["msg"]; !ok {
 		return errors.New("msg不能为空")
 	}
-	if _, tok := args["msg"].(Msg); !tok {
+	if _, ok := args["msg"].(map[string]interface{}); !ok {
 		return errors.New("msg格式错误")
 	}
-	res, err := rf.s.BroadcastSelf(args["msg"].(Msg))
+	msg, err := Map2Msg(args["msg"].(map[string]interface{}))
+	if err != nil {
+		return err
+	}
+	res, err := rf.s.BroadcastSelf(msg)
 	*reply = res
 	return err
 }
