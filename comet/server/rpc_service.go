@@ -2,11 +2,12 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
+
+	"github.com/astaxie/beego/logs"
 )
 
 //RpcService Rpc Service
@@ -83,12 +84,12 @@ func RunRpcService(s *server) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+s.Port)
 
 	if err != nil {
-		fmt.Println(err)
+		logs.Error("msg[启动rpc service失败] err[%s]", err.Error())
 		os.Exit(1)
 	}
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
-		fmt.Println(err)
+		logs.Error("msg[启动rpc service失败] err[%s]", err.Error())
 		os.Exit(1)
 	}
 	for {
