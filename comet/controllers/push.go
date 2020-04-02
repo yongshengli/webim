@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"webim/comet/server"
+	"comet/server"
 )
 
 type PushController struct {

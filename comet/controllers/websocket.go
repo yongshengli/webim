@@ -3,14 +3,17 @@ package controllers
 import (
 	"net/http"
 
+	"comet/server"
+
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
-	"webim/comet/server"
 )
+
 // WebSocketController handles WebSocket requests.
 type WebSocketController struct {
 	beego.Controller
 }
+
 // Join method handles WebSocket requests for WebSocketController.
 func (c *WebSocketController) Get() {
 	ws := websocket.Upgrader{}

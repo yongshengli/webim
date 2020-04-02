@@ -1,8 +1,8 @@
 package models
 
 import (
+	"comet/common"
 	"time"
-	"webim/comet/common"
 
 	"github.com/jinzhu/gorm"
 )

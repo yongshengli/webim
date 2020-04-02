@@ -1,8 +1,8 @@
 package models
 
 import (
+	"comet/common"
 	"testing"
-	"webim/comet/common"
 )
 
 func TestInsertUser(t *testing.T) {

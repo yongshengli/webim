@@ -1,6 +1,6 @@
 package controllers
 
-import "webim/comet/common"
+import "comet/common"
 
 var langTypes []string // Languages that are supported.
 

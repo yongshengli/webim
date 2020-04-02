@@ -1,8 +1,8 @@
 package server
 
 import (
+	"comet/common"
 	"time"
-	"webim/comet/common"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"

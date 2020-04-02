@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	"webim/comet/server"
+	"comet/server"
 )
 
-type MonitorController struct{
+type MonitorController struct {
 	BaseController
 }
 
-func (c MonitorController) Status(){
+func (c MonitorController) Status() {
 	c.success(server.Status())
 }

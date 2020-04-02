@@ -1,10 +1,10 @@
 package server
 
 import (
+	"comet/common"
 	"fmt"
 	"testing"
 	"time"
-	"webim/comet/common"
 
 	"github.com/gomodule/redigo/redis"
 )

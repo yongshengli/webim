@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"comet/common"
+	"comet/models"
 	"strings"
-	"webim/comet/common"
-	"webim/comet/models"
 
 	"github.com/astaxie/beego/logs"
 )

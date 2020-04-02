@@ -1,10 +1,10 @@
 package models
 
 import (
+	"comet/common"
 	"fmt"
 	"testing"
 	"time"
-	"webim/comet/common"
 )
 
 func init() {

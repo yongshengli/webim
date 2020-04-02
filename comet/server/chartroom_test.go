@@ -1,8 +1,8 @@
 package server
 
 import (
+	"comet/common"
 	"testing"
-	"webim/comet/common"
 
 	uuid "github.com/satori/go.uuid"
 )

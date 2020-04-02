@@ -1,8 +1,8 @@
 package server
 
 import (
-	"webim/comet/common"
-	"webim/comet/models"
+	"comet/common"
+	"comet/models"
 
 	"github.com/astaxie/beego/logs"
 )

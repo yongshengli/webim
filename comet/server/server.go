@@ -1,12 +1,12 @@
 package server
 
 import (
+	"comet/common"
 	"errors"
 	"fmt"
 	"net/rpc/jsonrpc"
 	"sync"
 	"time"
-	"webim/comet/common"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"

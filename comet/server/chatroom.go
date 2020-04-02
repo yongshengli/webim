@@ -1,12 +1,12 @@
 package server
 
 import (
+	"comet/common"
+	"comet/models"
 	"errors"
 	"reflect"
 	"strconv"
 	"time"
-	"webim/comet/common"
-	"webim/comet/models"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"

@@ -1,11 +1,11 @@
 package server
 
 import (
+	"comet/common"
 	"fmt"
 	"net/rpc"
 	"strings"
 	"time"
-	"webim/comet/common"
 
 	"github.com/astaxie/beego/logs"
 	"github.com/gomodule/redigo/redis"

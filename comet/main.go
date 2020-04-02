@@ -1,10 +1,10 @@
 package main
 
 import (
-	"webim/comet/common"
-	"webim/comet/controllers"
-	"webim/comet/models"
-	"webim/comet/server"
+	"comet/common"
+	"comet/controllers"
+	"comet/models"
+	"comet/server"
 
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"

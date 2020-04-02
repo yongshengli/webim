@@ -1,13 +1,14 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/beego/i18n"
-	"strings"
+	"comet/common"
 	"encoding/json"
-	"github.com/astaxie/beego/logs"
-	"webim/comet/common"
+	"strings"
 	"time"
+
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
+	"github.com/beego/i18n"
 )
 
 func init() {
@@ -22,6 +23,7 @@ func init() {
 		}
 	}
 }
+
 // baseController represents base router for all other app routers.
 // It implemented some methods for the same implementation;
 // thus, it will be embedded into other routers.
@@ -35,11 +37,11 @@ type BaseController struct {
 func (c *BaseController) Prepare() {
 	// Reset language option.
 	var params = make(map[string]interface{})
-    if strings.Contains(c.Ctx.Input.Header("Content-Type"), "application/json") {
-        if err := json.Unmarshal(c.Ctx.Input.RequestBody, &params); err != nil {
-            c.error("请求body必须是json格式" + err.Error())
-        }
-    }
+	if strings.Contains(c.Ctx.Input.Header("Content-Type"), "application/json") {
+		if err := json.Unmarshal(c.Ctx.Input.RequestBody, &params); err != nil {
+			c.error("请求body必须是json格式" + err.Error())
+		}
+	}
 	c.Data["params"] = params
 	c.Data["req_time"] = time.Now().Unix()
 }
@@ -69,12 +71,12 @@ func (c *BaseController) error(msg string) {
 	c.ServeJSON()
 }
 
-func (c *BaseController) log(){
+func (c *BaseController) log() {
 	req := map[string]interface{}{}
-	req["params"] =  c.Data["params"]
-	req["time"] =  c.Data["req_time"]
+	req["params"] = c.Data["params"]
+	req["time"] = c.Data["req_time"]
 	reqByte, err := common.EnJson(req)
-	if err!=nil{
+	if err != nil {
 		logs.Error("msg[base::log req json encode err] err[%s]", err)
 		return
 	}
@@ -82,7 +84,7 @@ func (c *BaseController) log(){
 	rsp["result"] = c.Data["json"]
 	rsp["time"] = time.Now().Unix()
 	rspByte, err := common.EnJson(rsp)
-	if err!=nil{
+	if err != nil {
 		logs.Error("msg[base::log rsp json encode err] err[%s]", err)
 		return
 	}
