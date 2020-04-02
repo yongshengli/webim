@@ -26,7 +26,7 @@ func TestCreateRoom(t *testing.T) {
 	if len(list) < len(uids) {
 		t.Error("写入数据条数不一致")
 	}
-	db.Table("room").Delete(&Room{}, "room_id=?", roomId)
+	db.Table("room").Delete(&Room{}, "id=?", roomId)
 }
 func init() {
 	ConnectTestMysql()
