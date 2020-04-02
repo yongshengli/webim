@@ -14,6 +14,7 @@ type User struct {
 	Password  string `json:"password"`
 	CT        int64  `json:"c_t" gorm:"column:c_t"`
 	LastLogin uint64 `json:"last_login"`
+	DeviceId  string `json:"device_id"`
 }
 
 //FindByName 根据用户名查询用户记录
