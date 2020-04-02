@@ -10,7 +10,7 @@ import (
 //User 用户模型
 type User struct {
 	Id        uint64 `json:"id" gorm:"primary_key"`
-	UserName  string `json:"user_name"`
+	Username  string `json:"username"`
 	Password  string `json:"password"`
 	CT        int64  `json:"c_t" gorm:"column:c_t"`
 	LastLogin uint64 `json:"last_login"`
@@ -19,7 +19,7 @@ type User struct {
 //FindByName 根据用户名查询用户记录
 func FindByName(name string) (*User, error) {
 	user := &User{}
-	res := db.Table("user").Where("user_name=?", name).First(user)
+	res := db.Table("user").Where("username=?", name).First(user)
 	if res.Error != nil {
 		return user, res.Error
 	}

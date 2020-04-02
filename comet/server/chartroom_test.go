@@ -8,7 +8,6 @@ import (
 )
 
 func TestNewRoom(t *testing.T) {
-	common.RedisInitTest()
 	roomId := "123"
 	room, err := NewRoom(roomId, "")
 	if err != nil {
@@ -60,4 +59,8 @@ func TestNewRoom(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func init() {
+	common.RedisInitTest()
 }

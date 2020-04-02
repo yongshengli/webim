@@ -32,7 +32,7 @@ func (sm *Context) List() ([]Info, error) {
 	if err != nil {
 		return nil, err
 	}
-	logs.Debug("msg[获取server列表] map[%v]", serverArr)
+	logs.Debug("msg[全部server列表] map[%v]", serverArr)
 	timeNow := time.Now().Unix()
 	res := make([]Info, 0)
 	for s, at := range serverArr {
@@ -47,6 +47,7 @@ func (sm *Context) List() ([]Info, error) {
 		}
 		res = append(res, sInfo)
 	}
+	logs.Debug("msg[可用server列表] map[%v]", res)
 	return res, nil
 }
 

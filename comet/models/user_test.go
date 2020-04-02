@@ -6,7 +6,7 @@ import (
 )
 
 func TestInsertUser(t *testing.T) {
-	user := &User{UserName: "admin111", Password: common.Md5("123456")}
+	user := &User{Username: "admin111", Password: common.Md5("123456")}
 	res := InsertUser(user)
 	if res.Error != nil {
 		t.Error(res)

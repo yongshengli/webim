@@ -8,7 +8,7 @@ import (
 
 //Room room
 type Room struct {
-	RoomId   uint64 `json:"id" gorm:"primary_key"`
+	Id       uint64 `json:"id" gorm:"primary_key"`
 	RoomName string `json:"room_name"`
 	CT       int64  `json:"c_t" gorm:"column:c_t"`
 }
@@ -37,12 +37,12 @@ func CreateRoom(uids []uint64) uint64 {
 		transaction.Callback()
 		return 0
 	}
-	res = BatchInserRoomUser(rData.RoomId, uids)
+	res = BatchInserRoomUser(rData.Id, uids)
 	if res.Error != nil {
 		transaction.Callback()
 		return 0
 	}
 	transaction.Commit()
 
-	return rData.RoomId
+	return rData.Id
 }
