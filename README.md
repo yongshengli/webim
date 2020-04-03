@@ -34,31 +34,27 @@ beego进程监控 http://127.0.0.1:8088/
 method post
 body
     {
-        {
-	        "device_token":"580ddd1f50f561a0968fa5fcd0cdad05",
-	        "msg":{
-		        "type":0,
-		        "data":"{\"content\":\"单播消息\"}"
-	        }
-        }
-    }
+		"device_token":"580ddd1f50f561a0968fa5fcd0cdad05",
+		"msg":{
+			"type":0,
+			"data":"{\"content\":\"单播消息\"}"
+		}
+	}
 ```
  /push/broadcast  //广播推送接口
  ``` 
 method post
 body
     {
-        {
-	        
-	        "msg":{
-		        "type":10,
-		        "data":"{\"content\":\"广播消息\"}"
-	        }
-        }
-    }
+		"msg":{
+			"type":10,
+			"data":"{\"content\":\"广播消息\"}"
+		}
+	}
 ```
  /monitor/status  //系统监控接口
 
+/user/register    //用户注册
 ## 附录
 消息类型
 ```
