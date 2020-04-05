@@ -186,7 +186,7 @@ func (s *Server) Unicast(deviceToken string, msg Msg) (bool, error) {
 		}
 		client, err := jsonrpc.Dial("tcp", addr)
 		if err != nil {
-			logs.Error("连接Dial的发生了错误addr:%s, err:%s", addr, err.Error())
+			logs.Error("msg[连接Dial的发生了错误addr:%s], err[%s]", addr, err.Error())
 			return false, err
 		}
 		defer client.Close()
