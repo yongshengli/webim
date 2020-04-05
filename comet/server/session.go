@@ -91,7 +91,6 @@ func (s *Session) start() {
 		case rsp := <-s.rspChan:
 			s.write(rsp)
 		case <-s.stopChan:
-			fmt.Println
 			s.Close()
 			return
 		}
