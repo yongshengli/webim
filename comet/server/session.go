@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+//User User
 type User struct {
 	Id            string                 `json:"id"`
 	Name          string                 `json:"name"`
@@ -25,6 +26,7 @@ type User struct {
 	RealIP        string                 `json:"real_ip"`
 }
 
+//Session Session
 type Session struct {
 	DeviceToken   string
 	User          *User
@@ -38,6 +40,7 @@ type Session struct {
 	sendFailCount int
 }
 
+//NewSession 新建Session对象
 func NewSession(conn *websocket.Conn, s *server) *Session {
 	u := &User{
 		Id:     "0",
@@ -58,6 +61,7 @@ func NewSession(conn *websocket.Conn, s *server) *Session {
 	}
 }
 
+//Run 开启协程保持会话
 func (s *Session) Run() {
 	defer s.Close()
 
@@ -87,11 +91,14 @@ func (s *Session) start() {
 		case rsp := <-s.rspChan:
 			s.write(rsp)
 		case <-s.stopChan:
+			fmt.Println
 			s.Close()
 			return
 		}
 	}
 }
+
+//Send 向客户端发送数据
 func (s *Session) Send(msg Msg) {
 	beego.Debug("msg[session send call]")
 	s.rspChan <- &msg
@@ -179,6 +186,8 @@ func (s *Session) read() {
 		}
 	}
 }
+
+//Close 关闭会话相关的协程、连接、删除数据库中的session信息
 func (s *Session) Close() {
 	defer s.Conn.Close()
 	s.Server.DelSession(s)
