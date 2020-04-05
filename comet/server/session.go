@@ -163,11 +163,14 @@ func (s *Session) read() {
 			logs.Info("msg[stop_read_client_data] user[%v]", s.User)
 			break
 		}
-		_, p, err := s.Conn.ReadMessage()
-		if err != nil && err == io.EOF {
-			logs.Warn("msg[disconnected_websocket] detail[%s]", err.Error())
-			s.Close()
-			break
+
+		MsgType, p, err := s.Conn.ReadMessage()
+		if err != nil {
+			logs.Warn("msg[websocket_read_message_err] err[%s] msg_type[%d]", err.Error(), MsgType)
+			if _, ok := err.(*websocket.CloseError); ok {
+				s.Close()
+				break
+			}
 		}
 		if len(p) > 0 {
 			msg := new(Msg)
