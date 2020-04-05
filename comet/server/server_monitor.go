@@ -19,7 +19,7 @@ type StatusData struct {
 func Status() StatusData {
 	monitor := StatusData{
 		UserNum:      0,
-		SessionNum:   Server.CountSession(),
+		SessionNum:   IMServer.CountSession(),
 		GoroutineNum: runtime.NumGoroutine(),
 	}
 	roomNum, err := TotalRoom()
@@ -27,7 +27,7 @@ func Status() StatusData {
 		logs.Error("msg[获取room num err] err[%s]", err.Error())
 	}
 	monitor.RoomNum = roomNum
-	serverNum, err := Server.context.Len()
+	serverNum, err := IMServer.context.Len()
 	if err != nil {
 		logs.Error("msg[获取server num err] err[%s]", err.Error())
 	}

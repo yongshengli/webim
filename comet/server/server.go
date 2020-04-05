@@ -12,15 +12,15 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
-var Server *server
+var IMServer *Server
 
-//Info server基本信息
+//Info Server基本信息
 type Info struct {
 	Host       string `json:"host"`
 	Port       string `json:"port"`
 	LastActive int64  `json:"last_active"` //上次活跃时间
 }
-type server struct {
+type Server struct {
 	Info
 	List             *[]Info
 	context          *Context
@@ -30,14 +30,15 @@ type server struct {
 	slotContainer    []*Slot //session 容器
 }
 
-func newServer(host, port string, slotContainerLen, slotLen int) *server {
+//NewServer NewServer
+func NewServer(host, port string, slotContainerLen, slotLen int) *Server {
 	info := Info{
 		Host:       host,
 		Port:       port,
 		LastActive: time.Now().Unix(),
 	}
 	context := new(Context)
-	s := &server{
+	s := &Server{
 		Info:             info,
 		List:             &[]Info{info},
 		context:          context,
@@ -59,14 +60,14 @@ func Run(host, port string, slotContainerLen, slotLen int) {
 	if host == "" || port == "" {
 		panic("host:port不能为空")
 	}
-	Server = newServer(host, port, slotContainerLen, slotLen)
-	go Server.ReportLive()
-	go RunRpcService(Server)
+	IMServer = NewServer(host, port, slotContainerLen, slotLen)
+	go IMServer.ReportLive()
+	go RunRpcService(IMServer)
 	logs.Debug("msg[server start...]")
 }
 
 //UpdateList 更新server缓存列表
-func (s *server) UpdateList() {
+func (s *Server) UpdateList() {
 	list, err := s.context.List()
 	if err != nil {
 		logs.Error("msg[更新server列表缓存失败] err[%s]", err.Error())
@@ -77,7 +78,7 @@ func (s *server) UpdateList() {
 }
 
 //ReportLive 服务报活
-func (s *server) ReportLive() {
+func (s *Server) ReportLive() {
 	t := time.NewTicker(time.Minute)
 	defer t.Stop()
 	for {
@@ -88,16 +89,16 @@ func (s *server) ReportLive() {
 		logs.Debug("msg[服务报活,更新server缓存] server[%s:%s]", s.Host, s.Port)
 	}
 }
-func (s *server) getSlotPos(deviceToken string) int {
+func (s *Server) getSlotPos(deviceToken string) int {
 	return common.StrMod(deviceToken, s.slotContainerLen)
 }
 
-func (s *server) getSlot(deviceToken string) *Slot {
+func (s *Server) getSlot(deviceToken string) *Slot {
 	return s.slotContainer[s.getSlotPos(deviceToken)]
 }
 
 //CheckSession 检查session用户是否登录
-func (s *server) CheckSession(ss *Session) bool {
+func (s *Server) CheckSession(ss *Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
@@ -105,12 +106,12 @@ func (s *server) CheckSession(ss *Session) bool {
 }
 
 //GetSessionByDeviceToken 根据tocken查找session
-func (s *server) GetSessionByDeviceToken(deviceToken string) *Session {
+func (s *Server) GetSessionByDeviceToken(deviceToken string) *Session {
 	return s.getSlot(deviceToken).Get(deviceToken)
 }
 
 //GetSessionByUid 在本机查找session
-func (s *server) GetSessionByUid(uid string) *Session {
+func (s *Server) GetSessionByUid(uid string) *Session {
 	if deviceToken, ok := s.users.Load(uid); ok {
 		t := deviceToken.(string)
 		return s.getSlot(t).Get(t)
@@ -119,7 +120,7 @@ func (s *server) GetSessionByUid(uid string) *Session {
 }
 
 //CountSession 统计本机session的数量
-func (s *server) CountSession() int {
+func (s *Server) CountSession() int {
 	num := 0
 	for i := 0; i < s.slotContainerLen; i++ {
 		num += s.slotContainer[i].Len()
@@ -128,7 +129,7 @@ func (s *server) CountSession() int {
 }
 
 //AddSession AddSession
-func (s *server) AddSession(ss *Session) bool {
+func (s *Server) AddSession(ss *Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
@@ -147,7 +148,7 @@ func (s *server) AddSession(ss *Session) bool {
 }
 
 //DelSession 删除Session
-func (s *server) DelSession(ss *Session) bool {
+func (s *Server) DelSession(ss *Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
@@ -171,7 +172,7 @@ func (s *server) DelSession(ss *Session) bool {
 }
 
 //Unicast 根据deviceToken找到用户对应的主机然后推送给用户
-func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
+func (s *Server) Unicast(deviceToken string, msg Msg) (bool, error) {
 	user, err := getDeviceTokenInfo(deviceToken)
 	if err != nil {
 		return false, err
@@ -205,7 +206,7 @@ func (s *server) Unicast(deviceToken string, msg Msg) (bool, error) {
 }
 
 //SendMsg 向本机用户发送消息
-func (s *server) SendMsg(deviceToken string, msg Msg) (bool, error) {
+func (s *Server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
 	slot := s.getSlot(deviceToken)
 	if slot.Has(deviceToken) {
@@ -217,7 +218,7 @@ func (s *server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 }
 
 //Broadcast 全部在线用户消息广播
-func (s *server) Broadcast(msg Msg) (bool, error) {
+func (s *Server) Broadcast(msg Msg) (bool, error) {
 	logs.Debug("msg[call_Broadcast]")
 	for _, st := range *s.List {
 		if st.Host == s.Host {
@@ -241,7 +242,7 @@ func (s *server) Broadcast(msg Msg) (bool, error) {
 }
 
 //BroadcastSelf 本机在线用户消息广播
-func (s *server) BroadcastSelf(msg Msg) (bool, error) {
+func (s *Server) BroadcastSelf(msg Msg) (bool, error) {
 	logs.Debug("msg[call_BroadcastSelf]")
 	for _, slot := range s.slotContainer {
 		sessionsMap := slot.All()

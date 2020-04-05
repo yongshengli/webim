@@ -24,7 +24,7 @@ func (c *PushController) Unicast() {
 		c.error(err.Error())
 		return
 	}
-	_, err = server.Server.Unicast(deviceToken, msg)
+	_, err = server.IMServer.Unicast(deviceToken, msg)
 	if err != nil {
 		c.error(err.Error())
 		return
@@ -43,7 +43,7 @@ func (c *PushController) Broadcast() {
 		c.error(err.Error())
 		return
 	}
-	_, err = server.Server.Broadcast(msg)
+	_, err = server.IMServer.Broadcast(msg)
 	if err != nil {
 		c.error(err.Error())
 		return

@@ -12,7 +12,7 @@ import (
 
 //RpcService Rpc Service
 type RpcService struct {
-	s *server
+	s *Server
 }
 
 //Unicast 单播
@@ -79,7 +79,7 @@ func (rf *RpcService) Ping(args map[string]interface{}, reply *string) error {
 }
 
 //RunRpcService 执行
-func RunRpcService(s *server) {
+func RunRpcService(s *Server) {
 	rpc.Register(&RpcService{s: s})
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ":"+s.Port)
 

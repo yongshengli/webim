@@ -214,7 +214,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
 		for _, user := range users {
 			//session.Send(msg)
 			tmsg := *msg
-			Server.Unicast(user, tmsg)
+			IMServer.Unicast(user, tmsg)
 		}
 	}
 	return true, nil

@@ -26,5 +26,5 @@ func (c *WebSocketController) Get() {
 		beego.Error("Cannot setup WebSocket connection:", err)
 		return
 	}
-	server.NewSession(conn, server.Server).Run()
+	server.NewSession(conn, server.IMServer).Run()
 }

@@ -15,7 +15,7 @@ type rpcClientPool chan *rpc.Client
 
 //Context Server context
 type Context struct {
-	server           *server
+	server           *Server
 	serverRpcPoolMap map[string]rpcClientPool
 }
 

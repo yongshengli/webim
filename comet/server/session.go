@@ -32,7 +32,7 @@ type Session struct {
 	User          *User
 	RoomId        string
 	Conn          *websocket.Conn
-	Server        *server // 该Session归属于哪个Server
+	Server        *Server // 该Session归属于哪个Server
 	IP            string  //用户所属机器ip
 	reqChan       chan *Msg
 	rspChan       chan *Msg
@@ -41,7 +41,7 @@ type Session struct {
 }
 
 //NewSession 新建Session对象
-func NewSession(conn *websocket.Conn, s *server) *Session {
+func NewSession(conn *websocket.Conn, s *Server) *Session {
 	u := &User{
 		Id:     "0",
 		Name:   "匿名用户",
