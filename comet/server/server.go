@@ -96,12 +96,15 @@ func (s *server) getSlot(deviceToken string) *Slot {
 	return s.slotContainer[s.getSlotPos(deviceToken)]
 }
 
+//CheckSession 检查session用户是否登录
 func (s *server) CheckSession(ss *Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
 	return s.getSlot(ss.DeviceToken).Has(ss.DeviceToken)
 }
+
+//GetSessionByDeviceToken 根据tocken查找session
 func (s *server) GetSessionByDeviceToken(deviceToken string) *Session {
 	return s.getSlot(deviceToken).Get(deviceToken)
 }
@@ -115,7 +118,7 @@ func (s *server) GetSessionByUid(uid string) *Session {
 	return nil
 }
 
-//统计session的数量
+//CountSession 统计本机session的数量
 func (s *server) CountSession() int {
 	num := 0
 	for i := 0; i < s.slotContainerLen; i++ {
@@ -123,6 +126,8 @@ func (s *server) CountSession() int {
 	}
 	return num
 }
+
+//AddSession AddSession
 func (s *server) AddSession(ss *Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
@@ -141,6 +146,7 @@ func (s *server) AddSession(ss *Session) bool {
 	return true
 }
 
+//DelSession 删除Session
 func (s *server) DelSession(ss *Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
