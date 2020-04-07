@@ -16,6 +16,8 @@ func TestInsertDevice(t *testing.T) {
 
 }
 
-func init() {
+func TestMain(m *testing.M) {
+	common.RedisInitTest()
 	ConnectTestMysql()
+	m.Run()
 }

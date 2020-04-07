@@ -4,9 +4,6 @@ import (
 	"testing"
 )
 
-func init() {
-	ConnectTestMysql()
-}
 func TestAddFriend(t *testing.T) {
 	uid := uint64(1)
 	res := AddFriend(uid, 2)

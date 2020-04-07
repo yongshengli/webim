@@ -28,6 +28,3 @@ func TestCreateRoom(t *testing.T) {
 	}
 	db.Table("room").Delete(&Room{}, "id=?", roomId)
 }
-func init() {
-	ConnectTestMysql()
-}

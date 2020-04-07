@@ -19,6 +19,3 @@ func TestInsertUser(t *testing.T) {
 	}
 	db.Table("user").Delete(&User{}, "id=?", user.Id)
 }
-func init() {
-	ConnectTestMysql()
-}

@@ -1,16 +1,11 @@
 package models
 
 import (
-	"comet/common"
 	"fmt"
 	"testing"
 	"time"
 )
 
-func init() {
-	common.RedisInitTest()
-	ConnectTestMysql()
-}
 func TestMsgIdKey(t *testing.T) {
 	msgId := msgIdKey("3")
 	if msgId != "room:3:msgId" {
