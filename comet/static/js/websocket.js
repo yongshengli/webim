@@ -5,7 +5,11 @@ $(document).ready(function () {
     socket = new WebSocket('ws://' + window.location.host + '/ws');
     socket.onopen = function() {
         console.log("建立长连接");
-        var data = {"type": 11, "data": JSON.stringify({"device_id": $('input[name="device_id"]').val()})}
+        var deviceId = getCookie('device_id')
+        if (deviceId==null || deviceId =="undefined"){
+            deviceId = ""
+        }
+        var data = {"type": 11, "data": JSON.stringify({"device_id": deviceId})}
         socket.send(JSON.stringify(data))
     };
     // Message received on the socket
@@ -29,6 +33,10 @@ $(document).ready(function () {
                     showMainBox()
                     var tMsg = {"type":4,"data": JSON.stringify({"room_id":"1"})}
                     socket.send(JSON.stringify(tMsg))
+                }
+                if (data.data["device_id"] != "undefined"){
+                    console.log(data.data["device_id"])
+                    setCookie("device_id", data.data["device_id"])
                 }
                 break;
             case 2: // JOIN
@@ -159,6 +167,22 @@ $(document).ready(function () {
     $('#sendbtn').click(function () {
         postContent();
     });
+    function setCookie(name, value){
+        var Days = 30;
+        var exp = new Date();
+        exp.setTime(exp.getTime() + Days*24*60*60*1000);
+        document.cookie = name +'=' + value + ";expires=" + exp.toGMTString();
+    }
+    //读取cookies
+    function getCookie(name)
+    {
+        var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+    
+        if(arr=document.cookie.match(reg))
+            return (arr[2]);
+        else
+            return null;
+    }
     $('#login-btn').click(function () {
         uname = $('input[name="uname"]').val()
         deviceId = $('input[name="device_id"]').val()

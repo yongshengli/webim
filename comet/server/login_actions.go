@@ -15,11 +15,15 @@ func (j *JobWorker) register() {
 		logs.Error("msg[register decode err] err[%s]", err.Error())
 		return
 	}
-	if _, ok := data["device_id"]; !ok {
+	j.Rsp.Type = TYPE_REGISTER
+
+	if deviceId, ok := data["device_id"]; !ok || deviceId == nil || deviceId == "" {
+		j.s.User.DeviceId = common.Uuid()
+		j.Rsp.Data, _ = common.Map2String(map[string]interface{}{"code": 0, "device_id": j.s.User.DeviceId})
+		j.s.Send(j.Rsp)
 		return
 	}
 
-	j.Rsp.Type = TYPE_REGISTER
 	j.s.User.DeviceId = data["device_id"].(string)
 
 	/**
@@ -37,7 +41,7 @@ func (j *JobWorker) register() {
 		}
 	}
 
-	j.Rsp.Data, _ = common.Map2String(map[string]interface{}{"code": 0})
+	j.Rsp.Data, _ = common.Map2String(map[string]interface{}{"code": 0, "device_id": j.s.User.DeviceId})
 	j.s.Send(j.Rsp)
 }
 func (j *JobWorker) login() {
