@@ -21,11 +21,11 @@ type Job struct {
 
 type Msg struct {
 	Type        float64 `json:"type" valid:"Required"`
-	DeviceToken string  `json:"device_token"`
-	Version     string  `json:"version"`
-	ReqId       string  `json:"req_id"`
-	Encode      string  `json:"encode"`
-	Data        string  `json:"data"`
+	DeviceToken string  `json:"device_token,omitempty" `
+	Version     string  `json:"version,omitempty"`
+	ReqId       string  `json:"req_id,omitempty"`
+	Encode      string  `json:"encode,omitempty"`
+	Data        string  `json:"data,omitempty"`
 }
 
 //Map2Msg 将map装换为Msg结构体
