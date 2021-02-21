@@ -38,7 +38,7 @@ func (j *JobWorker) joinRoom() {
 		}
 
 		rspData := make(map[string]interface{})
-		rspData["code"] = 1
+		rspData["code"] = 0
 		rspData["room_id"] = room.Id
 		rspData["content"] = j.s.User.Name + "进入房间"
 		j.Rsp.Data, _ = common.Map2String(rspData)
