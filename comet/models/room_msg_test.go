@@ -19,7 +19,7 @@ func TestRoomMsgInsert(t *testing.T) {
 		t.Error(err)
 	}
 	roomMsg := RoomMsg{MsgId: msgId, RoomId: "1", Content: "sss", Uid: 123, CT: time.Now().Unix()}
-	res := InsertRoomMsg(&roomMsg)
+	res := InsertRoomMsg(roomMsg)
 	if res.RowsAffected < 1 {
 		t.Error("插入失败")
 	}
