@@ -98,13 +98,16 @@ func msgZsetKey(roomId string) string {
 }
 
 //InsertRoomMsg 写入一条聊天数据数据
-func InsertRoomMsg(data *RoomMsg) *gorm.DB {
+func InsertRoomMsg(data RoomMsg) *gorm.DB {
 	roomId := data.RoomId
-	if db.NewRecord(data) == false {
+	if roomId == "" {
 		return nil
 	}
+	// if db.NewRecord(data) == false {
+	// 	return nil
+	// }
 	if data.CT < 1 {
 		data.CT = time.Now().Unix()
 	}
-	return db.Table(RoomMsgTableName(roomId)).Create(data)
+	return db.Table(RoomMsgTableName(roomId)).Create(&data)
 }

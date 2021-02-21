@@ -249,7 +249,17 @@ func SaveRoomMsg(roomId string, msg *Msg) (uint64, error) {
 		uidInt = int64(uid.(float64))
 	}
 	roomMsg := &models.RoomMsg{RoomId: roomId, Content: content.(string), Uid: uidInt, Uname: uname.(string), CT: time.Now().Unix()}
-	// res := models.InsertRoomMsg(roomId, roomMsg)
 	_, err := models.SaveMsg2Redis(roomMsg)
+	go func() {
+		for i := 0; i < 3; i++ {
+			res := models.InsertRoomMsg(*roomMsg)
+			if res != nil && len(res.GetErrors()) == 0 {
+				return
+			}
+			if i == 2 {
+				logs.Error("msg[i:%d,写入mysql失败err:%+v]", i, res.GetErrors())
+			}
+		}
+	}()
 	return roomMsg.MsgId, err
 }
