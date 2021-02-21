@@ -17,7 +17,7 @@ type Slot struct {
 /**
  * 初始化
  */
-func NewSlot(size int) *Slot{
+func NewSlot(size int) *Slot {
 	s := &Slot{}
 	s.dict = make(map[string]*Session, size)
 	s.lock = sync.RWMutex{}

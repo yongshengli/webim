@@ -2,6 +2,9 @@ package server
 
 import (
 	"comet/common"
+	"comet/server/base"
+	"comet/server/room"
+	"comet/server/session"
 	"errors"
 	"fmt"
 	"net/rpc/jsonrpc"
@@ -23,7 +26,7 @@ type Info struct {
 type Server struct {
 	Info
 	List             *[]Info
-	context          *Context
+	context          *ServerContext
 	users            sync.Map
 	slotLen          int     //每个Solt 的长度
 	slotContainerLen int     //session 容器长度
@@ -37,17 +40,17 @@ func NewServer(host, port string, slotContainerLen, slotLen int) *Server {
 		Port:       port,
 		LastActive: time.Now().Unix(),
 	}
-	context := new(Context)
+	svrContext := new(ServerContext)
 	s := &Server{
 		Info:             info,
 		List:             &[]Info{info},
-		context:          context,
+		context:          svrContext,
 		users:            sync.Map{},
 		slotLen:          slotLen,
 		slotContainerLen: slotContainerLen,
 		slotContainer:    make([]*Slot, slotContainerLen),
 	}
-	context.server = s
+	svrContext.Server = s
 	for i := 0; i < slotContainerLen; i++ {
 		s.slotContainer[i] = NewSlot(slotLen)
 	}
@@ -98,7 +101,7 @@ func (s *Server) getSlot(deviceToken string) *Slot {
 }
 
 //CheckSession 检查session用户是否登录
-func (s *Server) CheckSession(ss *Session) bool {
+func (s *Server) CheckSession(ss *session.Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
@@ -106,12 +109,12 @@ func (s *Server) CheckSession(ss *Session) bool {
 }
 
 //GetSessionByDeviceToken 根据tocken查找session
-func (s *Server) GetSessionByDeviceToken(deviceToken string) *Session {
+func (s *Server) GetSessionByDeviceToken(deviceToken string) *session.Session {
 	return s.getSlot(deviceToken).Get(deviceToken)
 }
 
 //GetSessionByUid 在本机查找session
-func (s *Server) GetSessionByUid(uid string) *Session {
+func (s *Server) GetSessionByUid(uid string) *session.Session {
 	if deviceToken, ok := s.users.Load(uid); ok {
 		t := deviceToken.(string)
 		return s.getSlot(t).Get(t)
@@ -129,7 +132,7 @@ func (s *Server) CountSession() int {
 }
 
 //AddSession AddSession
-func (s *Server) AddSession(ss *Session) bool {
+func (s *Server) AddSession(ss *session.Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
@@ -141,14 +144,14 @@ func (s *Server) AddSession(ss *Session) bool {
 		return false
 	}
 	s.getSlot(ss.DeviceToken).Add(ss.DeviceToken, ss)
-	if ss.User.Id != "" {
+	if ss.User.Id != 0 {
 		s.users.Store(ss.User.Id, ss.DeviceToken)
 	}
 	return true
 }
 
 //DelSession 删除Session
-func (s *Server) DelSession(ss *Session) bool {
+func (s *Server) DelSession(ss *session.Session) bool {
 	if len(ss.DeviceToken) < 1 {
 		return false
 	}
@@ -159,12 +162,12 @@ func (s *Server) DelSession(ss *Session) bool {
 	}
 	s.getSlot(ss.DeviceToken).Del(ss.DeviceToken)
 	if ss.RoomId != "" {
-		room, _ := GetRoom(ss.RoomId)
-		if room != nil {
-			room.Leave(ss)
+		myRoom, _ := room.GetRoom(ss.RoomId)
+		if myRoom != nil {
+			myRoom.Leave(ss)
 		}
 	}
-	if ss.User.Id != "" {
+	if ss.User.Id != 0 {
 		s.users.Delete(ss.User.Id)
 		return true
 	}
@@ -172,7 +175,7 @@ func (s *Server) DelSession(ss *Session) bool {
 }
 
 //Unicast 根据deviceToken找到用户对应的主机然后推送给用户
-func (s *Server) Unicast(deviceToken string, msg Msg) (bool, error) {
+func (s *Server) Unicast(deviceToken string, msg base.Msg) (bool, error) {
 	user, err := getDeviceTokenInfo(deviceToken)
 	if err != nil {
 		return false, err
@@ -180,13 +183,13 @@ func (s *Server) Unicast(deviceToken string, msg Msg) (bool, error) {
 	if user == nil {
 		return false, errors.New("用户token不存在")
 	}
-	if addr, ok := user["ip"]; ok && len(addr) > 1 {
-		if addr == fmt.Sprintf("%s:%s", s.Host, s.Port) {
+	if len(user.IP) > 1 {
+		if user.IP == fmt.Sprintf("%s:%s", s.Host, s.Port) {
 			return s.SendMsg(deviceToken, msg)
 		}
-		client, err := jsonrpc.Dial("tcp", addr)
+		client, err := jsonrpc.Dial("tcp", user.IP)
 		if err != nil {
-			logs.Error("msg[连接Dial的发生了错误addr:%s], err[%s]", addr, err.Error())
+			logs.Error("msg[连接Dial的发生了错误addr:%s], err[%s]", user.IP, err.Error())
 			return false, err
 		}
 		defer client.Close()
@@ -196,9 +199,9 @@ func (s *Server) Unicast(deviceToken string, msg Msg) (bool, error) {
 		reply := false
 		err = client.Call("RpcService.Unicast", args, &reply)
 		if err != nil {
-			logs.Error("msg[发送单播addr:%s失败] args[%v] res[%v] err[%s]", addr, args, reply, err.Error())
+			logs.Error("msg[发送单播addr:%s失败] args[%v] res[%v] err[%s]", user.IP, args, reply, err.Error())
 		} else {
-			logs.Debug("msg[发送单播addr:%s成功] args[%v] res[%v]", addr, args, reply)
+			logs.Debug("msg[发送单播addr:%s成功] args[%v] res[%v]", user.IP, args, reply)
 		}
 		return true, nil
 	}
@@ -206,7 +209,7 @@ func (s *Server) Unicast(deviceToken string, msg Msg) (bool, error) {
 }
 
 //SendMsg 向本机用户发送消息
-func (s *Server) SendMsg(deviceToken string, msg Msg) (bool, error) {
+func (s *Server) SendMsg(deviceToken string, msg base.Msg) (bool, error) {
 	logs.Debug("msg[call_SendMsg] device_token[%s]", deviceToken)
 	slot := s.getSlot(deviceToken)
 	if slot.Has(deviceToken) {
@@ -218,7 +221,7 @@ func (s *Server) SendMsg(deviceToken string, msg Msg) (bool, error) {
 }
 
 //Broadcast 全部在线用户消息广播
-func (s *Server) Broadcast(msg Msg) (bool, error) {
+func (s *Server) Broadcast(msg base.Msg) (bool, error) {
 	logs.Debug("msg[call_Broadcast]")
 	for _, st := range *s.List {
 		if st.Host == s.Host {
@@ -242,7 +245,7 @@ func (s *Server) Broadcast(msg Msg) (bool, error) {
 }
 
 //BroadcastSelf 本机在线用户消息广播
-func (s *Server) BroadcastSelf(msg Msg) (bool, error) {
+func (s *Server) BroadcastSelf(msg base.Msg) (bool, error) {
 	logs.Debug("msg[call_BroadcastSelf]")
 	for _, slot := range s.slotContainer {
 		sessionsMap := slot.All()

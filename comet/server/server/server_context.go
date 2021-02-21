@@ -13,20 +13,20 @@ import (
 
 type rpcClientPool chan *rpc.Client
 
-//Context Server context
-type Context struct {
-	server           *Server
+//ServerContext Server context
+type ServerContext struct {
+	Server           *Server
 	serverRpcPoolMap map[string]rpcClientPool
 }
 
 //Register 注册server
-func (sm *Context) Register(s Info) (int, error) {
+func (sm *ServerContext) Register(s Info) (int, error) {
 	key := fmt.Sprintf("%s:%s", s.Host, s.Port)
 	return redis.Int(common.RedisClient.Do("zadd", serverMapKey(), s.LastActive, key))
 }
 
 //List 列出全部server
-func (sm *Context) List() ([]Info, error) {
+func (sm *ServerContext) List() ([]Info, error) {
 	//"WITHSCORES"
 	serverArr, err := redis.Int64Map(common.RedisClient.Do("zrevrange", serverMapKey(), 0, -1, "WITHSCORES"))
 	if err != nil {
@@ -52,12 +52,12 @@ func (sm *Context) List() ([]Info, error) {
 }
 
 //Len 统计server个数
-func (sm *Context) Len() (int, error) {
+func (sm *ServerContext) Len() (int, error) {
 	return redis.Int(common.RedisClient.Do("zcard", serverMapKey()))
 }
 
 //Remove 移除server
-func (sm *Context) Remove(s Info) (int, error) {
+func (sm *ServerContext) Remove(s Info) (int, error) {
 	key := fmt.Sprintf("%s:%s", s.Host, s.Port)
 	logs.Info("remove server " + key)
 	return redis.Int(common.RedisClient.Do("zrem", serverMapKey(), key))

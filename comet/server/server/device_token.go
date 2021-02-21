@@ -2,6 +2,7 @@ package server
 
 import (
 	"comet/common"
+	"comet/server/base"
 	"errors"
 
 	"github.com/astaxie/beego"
@@ -13,7 +14,7 @@ func delDeviceTokenInfo(deviceToken string) (int, error) {
 	logs.Debug("msg[call_delDeviceTokenInfo] device_toke[%s]", deviceToken)
 	return common.RedisClient.Del([]string{deviceTokenKey(deviceToken)})
 }
-func saveDeviceTokenInfo(user *User) (string, error) {
+func saveDeviceTokenInfo(user *base.User) (string, error) {
 	if len(user.DeviceToken) < 1 {
 		return "", errors.New("DeviceToken为空")
 	}
@@ -22,15 +23,15 @@ func saveDeviceTokenInfo(user *User) (string, error) {
 		beego.Error(err)
 		return "", err
 	} else {
-		return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, SESSION_LIVE_TIME)
+		return common.RedisClient.Set(deviceTokenKey(user.DeviceToken), jsonStr, base.SESSION_LIVE_TIME)
 	}
 }
 func getDeviceTokenByUid(uid string) (string, error) {
 	return redis.String(common.RedisClient.Get(uidKey(uid)))
 }
 
-func getDeviceTokenInfo(deviceToken string) (map[string]string, error) {
-	var res map[string]string
+func getDeviceTokenInfo(deviceToken string) (*base.User, error) {
+	user := &base.User{}
 	tokenKey := deviceTokenKey(deviceToken)
 	commands := make([]common.RedisCommands, 2)
 	commands[0] = common.RedisCommands{CommandName: "GET", Args: []interface{}{tokenKey}}
@@ -44,16 +45,16 @@ func getDeviceTokenInfo(deviceToken string) (map[string]string, error) {
 	if reply[0]["reply"] == nil {
 		return nil, nil
 	}
-	if err := common.DeJson(reply[0]["reply"].([]byte), &res); err != nil {
+	if err := common.DeJson(reply[0]["reply"].([]byte), user); err != nil {
 		logs.Error("msg[解析json失败] method[getDeviceTokenInfo] err[%s]", err.Error())
 		return nil, err
 	}
 	if ttl := reply[1]["reply"].(int64); ttl < 3600 {
-		if _, err := common.RedisClient.Expire(tokenKey, SESSION_LIVE_TIME); err != nil {
+		if _, err := common.RedisClient.Expire(tokenKey, base.SESSION_LIVE_TIME); err != nil {
 			logs.Error("msg[延长session有效期失败] err[%s]", err.Error())
 		}
 	}
-	return res, nil
+	return user, nil
 }
 func deviceTokenKey(deviceToken string) string {
 	return "comet:token:" + deviceToken

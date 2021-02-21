@@ -1,4 +1,4 @@
-package server
+package base
 
 import (
 	"errors"
@@ -20,12 +20,21 @@ type Job struct {
 }
 
 type Msg struct {
-	Type        float64 `json:"type" valid:"Required"`
-	DeviceToken string  `json:"device_token,omitempty" `
-	Version     string  `json:"version,omitempty"`
-	ReqId       string  `json:"req_id,omitempty"`
-	Encode      string  `json:"encode,omitempty"`
-	Data        string  `json:"data,omitempty"`
+	Type float64 `json:"type" valid:"Required"`
+	// DeviceToken string  `json:"device_token,omitempty" `
+	Version string `json:"version,omitempty"`
+	ReqId   string `json:"req_id,omitempty"`
+	Encode  string `json:"encode,omitempty"`
+	Data    string `json:"data,omitempty"`
+}
+
+// GetData 获取data byte
+func (m *Msg) GetData() []byte {
+	return []byte(m.Data)
+}
+
+func (m *Msg) SetData(data []byte) {
+	m.Data = string(data)
 }
 
 //Map2Msg 将map装换为Msg结构体

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"comet/server/base"
 	"errors"
 	"net"
 	"net/rpc"
@@ -23,7 +24,7 @@ func (rf *RpcService) Unicast(args map[string]interface{}, reply *bool) error {
 	if _, ok := args["msg"]; !ok {
 		return errors.New("msg不能为空")
 	}
-	msg, err := Map2Msg(args["msg"].(map[string]interface{}))
+	msg, err := base.Map2Msg(args["msg"].(map[string]interface{}))
 	if err != nil {
 		return err
 	}
@@ -40,7 +41,7 @@ func (rf *RpcService) Broadcast(args map[string]interface{}, reply *bool) error 
 	if _, ok := args["msg"].(map[string]interface{}); !ok {
 		return errors.New("msg格式错误")
 	}
-	msg, err := Map2Msg(args["msg"].(map[string]interface{}))
+	msg, err := base.Map2Msg(args["msg"].(map[string]interface{}))
 	if err != nil {
 		return err
 	}
@@ -57,7 +58,7 @@ func (rf *RpcService) BroadcastSelf(args map[string]interface{}, reply *bool) er
 	if _, ok := args["msg"].(map[string]interface{}); !ok {
 		return errors.New("msg格式错误")
 	}
-	msg, err := Map2Msg(args["msg"].(map[string]interface{}))
+	msg, err := base.Map2Msg(args["msg"].(map[string]interface{}))
 	if err != nil {
 		return err
 	}

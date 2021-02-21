@@ -1,11 +1,11 @@
-package server
+package room
 
 import (
 	"comet/common"
 	"comet/models"
+	"comet/server/base"
 	"errors"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -28,7 +28,7 @@ func NewRoom(id string, name string) (*Room, error) {
 		return nil, err
 	}
 	commands := make([]common.RedisCommands, 2)
-	commands[0] = common.RedisCommands{CommandName: "SETEX", Args: []interface{}{roomKey(id), int(ROOM_LIVE_TIME / time.Second), roomJson}}
+	commands[0] = common.RedisCommands{CommandName: "SETEX", Args: []interface{}{roomKey(id), int(base.ROOM_LIVE_TIME / time.Second), roomJson}}
 	commands[1] = common.RedisCommands{CommandName: "ZADD", Args: []interface{}{roomZsetKey(), time.Now().Unix(), id}}
 	res := common.RedisClient.Pipeline(commands)
 	//fmt.Println(res)
@@ -86,7 +86,7 @@ func GetRoom(id string) (*Room, error) {
 	}
 
 	if ttl := res[1]["reply"].(int64); ttl < 3600*3 {
-		_, err := common.RedisClient.Expire(roomRedisKey, ROOM_LIVE_TIME)
+		_, err := common.RedisClient.Expire(roomRedisKey, base.ROOM_LIVE_TIME)
 		if err != nil {
 			logs.Error("msg[延长room data redis 时间失败] err[%s]", err.Error())
 		}
@@ -129,7 +129,7 @@ func (r *Room) Users(start, end int) ([]string, error) {
 }
 
 //Join 加入房间
-func (r *Room) Join(s *Session) (bool, error) {
+func (r *Room) Join(s base.Sessioner) (bool, error) {
 	//r.users[s.Id] = RUser{SId:s.Id, Ip:s.IP, User:*s.User}
 	//退出旧房间
 	if s.RoomId != "" && s.RoomId != r.Id {
@@ -152,7 +152,7 @@ func (r *Room) Join(s *Session) (bool, error) {
 }
 
 //Leave 离开房间
-func (r *Room) Leave(s *Session) (bool, error) {
+func (r *Room) Leave(s base.Sessioner) (bool, error) {
 	if len(s.DeviceToken) < 1 {
 		return false, errors.New("session.DeviceToken为空")
 	}
@@ -174,29 +174,21 @@ func (r *Room) Leave(s *Session) (bool, error) {
 }
 
 //Broadcast 房间内广播
-func (r *Room) Broadcast(msg *Msg) (bool, error) {
-	resData := map[string]interface{}{}
-	if msg.Data != "" {
-		if err := common.DeJson([]byte(msg.Data), &resData); err != nil {
-			logs.Error("msg[Broadcast DeJson err] err[%s]", err.Error())
-			return false, err
-		}
+func (r *Room) Broadcast(msgData *models.RoomMsg) (bool, error) {
+	msgStr, _ := common.EnJson(msgData)
+	msg := base.Msg{
+		Type: base.TYPE_ROOM_MSG,
+		Data: string(msgStr),
 	}
-	resData["room_id"] = r.Id
-	resData["c_t"] = time.Now().Unix()
 
-	if roomMsgId, err := SaveRoomMsg(r.Id, msg); err != nil {
+	if roomMsgId, err := SaveRoomMsg(r.Id, msgData); err != nil || roomMsgId == 0 {
 		logs.Error("msg[room msg 写入数据库失败]")
-	} else {
-		resData["id"] = roomMsgId
 	}
-	jsonByte, err := common.EnJson(resData)
+	jsonByte, err := common.EnJson(msgData)
 	if err != nil {
 		return false, err
 	}
 	msg.Data = string(jsonByte)
-	msg.Type = TYPE_ROOM_MSG
-
 	beego.Debug("msg[room broadcast]")
 	start := 0
 	pageSize := 1000
@@ -213,7 +205,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
 		//beego.Debug("msg[room中的用户] users[%s]", users)
 		for _, user := range users {
 			//session.Send(msg)
-			tmsg := *msg
+			tmsg := msg
 			IMServer.Unicast(user, tmsg)
 		}
 	}
@@ -221,34 +213,7 @@ func (r *Room) Broadcast(msg *Msg) (bool, error) {
 }
 
 //SaveRoomMsg 保存聊天记录到
-func SaveRoomMsg(roomId string, msg *Msg) (uint64, error) {
-	var msgData map[string]interface{}
-	if err := common.DeJson([]byte(msg.Data), &msgData); err != nil {
-		logs.Error("msg[SaveRoomMsg DeJson err] err[%s]", err.Error())
-		return 0, err
-	}
-	content, ok := msgData["content"]
-	if !ok {
-		logs.Error("msg[SaveRoomMsg msg.Data 中不包含content]")
-		return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
-	}
-	uid, ok := msgData["uid"]
-	if !ok {
-		logs.Error("msg[SaveRoomMsg msg.Data 中不包含uid]")
-		return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
-	}
-	uname, ok := msgData["uname"]
-	if !ok {
-		logs.Error("msg[SaveRoomMsg msg.Data 中不包含uname]")
-		return 0, errors.New("SaveRoomMsg msg.Data 中不包含content")
-	}
-	var uidInt int64
-	if reflect.ValueOf(uid).Kind() == reflect.String {
-		uidInt, _ = strconv.ParseInt(uid.(string), 10, 64)
-	} else {
-		uidInt = int64(uid.(float64))
-	}
-	roomMsg := &models.RoomMsg{RoomId: roomId, Content: content.(string), Uid: uidInt, Uname: uname.(string), CT: time.Now().Unix()}
+func SaveRoomMsg(roomId string, roomMsg *models.RoomMsg) (uint64, error) {
 	_, err := models.SaveMsg2Redis(roomMsg)
 	go func() {
 		for i := 0; i < 3; i++ {

@@ -1,7 +1,8 @@
-package server
+package session
 
 import (
 	"comet/common"
+	"comet/server/base"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,36 +15,25 @@ import (
 )
 
 //User User
-type User struct {
-	Id            string                 `json:"id"`
-	Name          string                 `json:"name"`
-	Platform      string                 `json:"platform"`
-	ClientVersion string                 `json:"clientVersion"`
-	DeviceId      string                 `json:"device_id"`
-	DeviceToken   string                 `json:"device_token"` // CometToken = md5(udid+appKey)
-	Info          map[string]interface{} `json:"info"`
-	IP            string                 `json:"ip"`
-	RealIP        string                 `json:"real_ip"`
-}
 
 //Session Session
 type Session struct {
 	DeviceToken   string
-	User          *User
+	User          *base.User
 	RoomId        string
 	Conn          *websocket.Conn
-	Server        *Server // 该Session归属于哪个Server
-	IP            string  //用户所属机器ip
-	reqChan       chan *Msg
-	rspChan       chan *Msg
+	Server        base.Serverer // 该Session归属于哪个Server
+	IP            string        //用户所属机器ip
+	reqChan       chan *base.Msg
+	rspChan       chan *base.Msg
 	stopChan      chan bool
 	sendFailCount int
 }
 
 //NewSession 新建Session对象
-func NewSession(conn *websocket.Conn, s *Server) *Session {
-	u := &User{
-		Id:     "0",
+func NewSession(conn *websocket.Conn, s base.Serverer) *Session {
+	u := &base.User{
+		Id:     0,
 		Name:   "匿名用户",
 		IP:     fmt.Sprintf("%s:%s", s.Host, s.Port),
 		RealIP: conn.RemoteAddr().String(),
@@ -55,8 +45,8 @@ func NewSession(conn *websocket.Conn, s *Server) *Session {
 		Server:        s,
 		IP:            u.IP,
 		stopChan:      make(chan bool),
-		reqChan:       make(chan *Msg, 1000),
-		rspChan:       make(chan *Msg, 1000),
+		reqChan:       make(chan *base.Msg, 1000),
+		rspChan:       make(chan *base.Msg, 1000),
 		sendFailCount: 0,
 	}
 }
@@ -98,9 +88,25 @@ func (s *Session) start() {
 }
 
 //Send 向客户端发送数据
-func (s *Session) Send(msg Msg) {
+func (s *Session) Send(msg base.Msg) {
 	beego.Debug("msg[session send call]")
 	s.rspChan <- &msg
+}
+
+// SaveLoginState 保存用户的登录状态
+func (s *Session) SaveLoginState(u *base.User) {
+	s.DeviceToken = u.DeviceToken
+	s.User = u
+}
+
+// GetUser 获取用户信息
+func (s *Session) GetUser() *base.User {
+	return s.User
+}
+
+// GetServer 获取session 所在的服务
+func (s *Session) GetServer() base.Serverer {
+	return s.Server
 }
 
 //检查session是否有效
@@ -114,15 +120,15 @@ func (s *Session) ping() {
 		s.Close()
 		return
 	}
-	msg := Msg{Type: TYPE_PING, Data: ""}
+	msg := base.Msg{Type: base.TYPE_PING, Data: ""}
 	s.Send(msg)
 }
 
 func (s *Session) pong() {
-	msg := Msg{Type: TYPE_PONG, Data: ""}
+	msg := base.Msg{Type: base.TYPE_PONG, Data: ""}
 	s.Send(msg)
 }
-func (s *Session) write(msg *Msg) error {
+func (s *Session) write(msg *base.Msg) error {
 
 	data, err := common.EnJson(msg)
 	if err != nil {
@@ -147,17 +153,17 @@ func (s *Session) write(msg *Msg) error {
 	return nil
 }
 
-func (s *Session) do(msg *Msg) {
-	if msg.Type == TYPE_PONG {
+func (s *Session) do(msg *base.Msg) {
+	if msg.Type == base.TYPE_PONG {
 		return
-	} else if msg.Type == TYPE_PING {
+	} else if msg.Type == base.TYPE_PING {
 		s.pong()
 		return
 	}
 	//没有带deviceToken的链接不予许访问register以外的业务方法
-	if msg.Type != TYPE_REGISTER && msg.Type != TYPE_LOGIN {
+	if msg.Type != base.TYPE_REGISTER && msg.Type != base.TYPE_LOGIN {
 		if s.checkSession() == false {
-			s.Send(Msg{Type: msg.Type, Data: "验证用户登录信息失败"})
+			s.Send(base.Msg{Type: msg.Type, Data: "验证用户登录信息失败"})
 			return
 		}
 	}
@@ -179,7 +185,7 @@ func (s *Session) read() {
 			}
 		}
 		if len(p) > 0 {
-			msg := new(Msg)
+			msg := new(base.Msg)
 			json.Unmarshal(p, msg)
 			s.reqChan <- msg
 		}
