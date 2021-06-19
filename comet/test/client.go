@@ -2,7 +2,7 @@ package main
 
 import (
 	"comet/common"
-	"comet/server"
+	"comet/service/server"
 	"flag"
 	"log"
 	"net/url"

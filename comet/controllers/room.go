@@ -1,6 +1,6 @@
 package controllers
 
-import "comet/server"
+import "comet/service/room"
 
 type RoomController struct {
 	BaseController
@@ -8,12 +8,12 @@ type RoomController struct {
 
 func (c *RoomController) Create() {
 	roomId := c.GetString("id")
-	server.NewRoom(roomId, "")
+	room.NewRoom(roomId, "")
 	c.success(nil)
 }
 
 func (c *RoomController) Delete() {
 	roomId := c.GetString("id")
-	server.DelRoom(roomId)
+	room.DelRoom(roomId)
 	c.success(nil)
 }

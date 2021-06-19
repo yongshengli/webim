@@ -4,13 +4,17 @@ import (
 	"comet/common"
 	"comet/controllers"
 	"comet/models"
-	"comet/server"
+	"comet/service/server"
+	"math/bits"
 
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
 )
 
 func main() {
+
+	bits.OnesCount()
+
 	beego.Info(beego.BConfig.AppName, "start...")
 
 	// Register routers.

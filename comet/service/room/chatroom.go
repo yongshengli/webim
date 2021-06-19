@@ -3,7 +3,7 @@ package room
 import (
 	"comet/common"
 	"comet/models"
-	"comet/server/base"
+	"comet/service/base"
 	"errors"
 	"reflect"
 	"time"

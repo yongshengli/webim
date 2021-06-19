@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"comet/server"
+	"comet/service/server"
 )
 
 type MonitorController struct {

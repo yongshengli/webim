@@ -1,6 +1,7 @@
 package server
 
 import (
+	"comet/service/session"
 	"sync"
 )
 
@@ -11,7 +12,7 @@ import (
  */
 type Slot struct {
 	lock sync.RWMutex
-	dict map[string]*Session
+	dict map[string]*session.Session
 }
 
 /**

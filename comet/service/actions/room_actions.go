@@ -3,9 +3,9 @@ package actions
 import (
 	"comet/common"
 	"comet/models"
-	"comet/server/base"
-	"comet/server/req2resp"
-	"comet/server/room"
+	"comet/service/base"
+	"comet/service/req2resp"
+	"comet/service/room"
 
 	"github.com/astaxie/beego/logs"
 )

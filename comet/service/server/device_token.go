@@ -2,7 +2,7 @@ package server
 
 import (
 	"comet/common"
-	"comet/server/base"
+	"comet/service/base"
 	"errors"
 
 	"github.com/astaxie/beego"

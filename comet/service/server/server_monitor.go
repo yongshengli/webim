@@ -1,6 +1,7 @@
 package server
 
 import (
+	"comet/service/room"
 	"runtime"
 
 	"github.com/astaxie/beego/logs"
@@ -22,7 +23,7 @@ func Status() StatusData {
 		SessionNum:   IMServer.CountSession(),
 		GoroutineNum: runtime.NumGoroutine(),
 	}
-	roomNum, err := TotalRoom()
+	roomNum, err := room.TotalRoom()
 	if err != nil {
 		logs.Error("msg[获取room num err] err[%s]", err.Error())
 	}

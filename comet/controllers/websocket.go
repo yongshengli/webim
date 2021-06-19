@@ -3,7 +3,8 @@ package controllers
 import (
 	"net/http"
 
-	"comet/server"
+	"comet/service/server"
+	"comet/service/session"
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
@@ -26,5 +27,5 @@ func (c *WebSocketController) Get() {
 		beego.Error("Cannot setup WebSocket connection:", err)
 		return
 	}
-	server.NewSession(conn, server.IMServer).Run()
+	session.NewSession(conn, server.IMServer).Run()
 }

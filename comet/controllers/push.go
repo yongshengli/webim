@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"comet/server"
+	"comet/service/base"
+	"comet/service/server"
 )
 
 type PushController struct {
@@ -19,7 +20,7 @@ func (c *PushController) Unicast() {
 		return
 	}
 	deviceToken := params["device_token"].(string)
-	msg, err := server.Map2Msg(params["msg"].(map[string]interface{}))
+	msg, err := base.Map2Msg(params["msg"].(map[string]interface{}))
 	if err != nil {
 		c.error(err.Error())
 		return
@@ -38,7 +39,7 @@ func (c *PushController) Broadcast() {
 		c.error("msg为空或者msg格式错误")
 		return
 	}
-	msg, err := server.Map2Msg(params["msg"].(map[string]interface{}))
+	msg, err := base.Map2Msg(params["msg"].(map[string]interface{}))
 	if err != nil {
 		c.error(err.Error())
 		return

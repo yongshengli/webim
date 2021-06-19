@@ -2,9 +2,9 @@ package server
 
 import (
 	"comet/common"
-	"comet/server/base"
-	"comet/server/room"
-	"comet/server/session"
+	"comet/service/base"
+	"comet/service/room"
+	"comet/service/session"
 	"errors"
 	"fmt"
 	"net/rpc/jsonrpc"

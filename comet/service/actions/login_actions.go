@@ -3,8 +3,8 @@ package actions
 import (
 	"comet/common"
 	"comet/models"
-	"comet/server/base"
-	"comet/server/req2resp"
+	"comet/service/base"
+	"comet/service/req2resp"
 	"strconv"
 
 	"github.com/astaxie/beego"

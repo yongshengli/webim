@@ -2,9 +2,9 @@ package server
 
 import (
 	"comet/common"
-	"comet/server/actions"
-	"comet/server/base"
-	"comet/server/session"
+	"comet/service/actions"
+	"comet/service/base"
+	"comet/service/session"
 	"time"
 
 	"github.com/astaxie/beego"

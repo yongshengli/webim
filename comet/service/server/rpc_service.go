@@ -1,7 +1,7 @@
 package server
 
 import (
-	"comet/server/base"
+	"comet/service/base"
 	"errors"
 	"net"
 	"net/rpc"
